@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 
 class AudioService {
@@ -32,6 +33,8 @@ class AudioService {
       await _voice.setAsset('assets/audio/$ref.m4a');
       await _voice.setVolume(voiceVolume);
       await _voice.play();
+    } on MissingPluginException {
+      debugPrint('⚠️ الصوت غير مدعوم على هذه المنصة (لينكس)، وسيعمل على أندرويد');
     } catch (e) {
       debugPrint('audio error ($ref): $e');
     }
@@ -41,6 +44,8 @@ class AudioService {
     _token++;
     try {
       await _voice.stop();
+    } on MissingPluginException {
+      // تجاهل على لينكس
     } catch (e) {
       debugPrint('audio stop error: $e');
     }
@@ -49,8 +54,6 @@ class AudioService {
   Future<void> dispose() async {
     try {
       await _voice.dispose();
-    } catch (e) {
-      debugPrint('audio dispose error: $e');
-    }
+    } catch (_) {}
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../providers/content_providers.dart';
+import '../../../providers/progress_providers.dart';
 
 class LettersScreen extends ConsumerWidget {
   const LettersScreen({super.key});
@@ -9,6 +10,8 @@ class LettersScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final repo = ref.watch(contentRepositoryProvider);
+    final stars = ref.watch(starsProvider).valueOrNull ?? const {};
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -31,9 +34,22 @@ class LettersScreen extends ConsumerWidget {
           itemCount: r.letters.length,
           itemBuilder: (context, i) {
             final l = r.letters[i];
-            return FilledButton(
-              onPressed: () => context.push('/letters/${l.id}'),
-              child: Text(l.character, style: const TextStyle(fontSize: 64)),
+            final earnedStars = stars[l.id] ?? 0;
+            return Stack(
+              children: [
+                Positioned.fill(
+                  child: FilledButton(
+                    onPressed: () => context.push('/letters/${l.id}'),
+                    child: Text(l.character, style: const TextStyle(fontSize: 64)),
+                  ),
+                ),
+                if (earnedStars > 0)
+                  const PositionedDirectional(
+                    top: 6,
+                    end: 6,
+                    child: Icon(Icons.star, color: Colors.amber, size: 28),
+                  ),
+              ],
             );
           },
         ),

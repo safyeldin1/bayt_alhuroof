@@ -1,0 +1,19 @@
+{
+  "id": "trace_letter_ba",
+  "viewBox": [0, 0, 100, 100],
+  "strokes": [
+    {
+      "order": 1,
+      "type": "path",
+      "d": "M 80 20 C 80 80 20 80 20 20",
+      "start": [80, 20],
+      "tolerance": 12
+    },
+    {
+      "order": 2,
+      "type": "dot",
+      "center": [50, 85],
+      "radius": 6
+    }
+  ]
+}

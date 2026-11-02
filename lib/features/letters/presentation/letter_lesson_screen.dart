@@ -24,8 +24,9 @@ class _LetterLessonScreenState extends ConsumerState<LetterLessonScreen> {
 
   Future<void> _speak() async {
     final repo = await ref.read(contentRepositoryProvider.future);
+    if (!mounted) return; // 👈 إضافة سطر الأمان هنا
     final letter = repo.letterById(widget.letterId);
-    if (letter == null || !mounted) return;
+    if (letter == null) return;
     final word = repo.wordById(letter.primaryWordId);
     ref.read(audioServiceProvider).playSequence([
       letter.nameAudio,
@@ -127,6 +128,23 @@ class _LessonBody extends StatelessWidget {
               icon: const Icon(Icons.volume_up),
             ),
             const Spacer(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton.filledTonal(
+                  iconSize: 48,
+                  onPressed: () => context.push('/letters/${letter.id}/recognize'),
+                  icon: const Icon(Icons.touch_app),
+                ),
+                const SizedBox(width: 24),
+                IconButton.filledTonal(
+                  iconSize: 48,
+                  onPressed: () => context.push('/letters/${letter.id}/trace'),
+                  icon: const Icon(Icons.draw),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
