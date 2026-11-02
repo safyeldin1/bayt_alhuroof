@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "items": [
+    {
+      "id": "letter_alf", "order": 1, "character": "أ", "name": "أَلِف",
+      "forms": { "isolated": "أ", "initial": "أ", "medial": "ـأ", "final": "ـأ" },
+      "audio": { "name": "letters/alf_name", "sound": "letters/alf_sound" },
+      "primaryWordId": "word_asad", "tracingId": "trace_letter_alf", "status": "published"
+    },
+    {
+      "id": "letter_ba", "order": 2, "character": "ب", "name": "بَاء",
+      "forms": { "isolated": "ب", "initial": "بـ", "medial": "ـبـ", "final": "ـب" },
+      "audio": { "name": "letters/ba_name", "sound": "letters/ba_sound" },
+      "primaryWordId": "word_batta", "tracingId": "trace_letter_ba", "status": "published"
+    }
+  ]
+}

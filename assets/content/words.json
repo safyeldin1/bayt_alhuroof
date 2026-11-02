@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "items": [
+    {
+      "id": "word_asad", "text": "أسد", "textVowelled": "أَسَد",
+      "startsWithLetterId": "letter_alf", "image": "words/asad", "audio": "words/asad"
+    },
+    {
+      "id": "word_batta", "text": "بطة", "textVowelled": "بَطَّة",
+      "startsWithLetterId": "letter_ba", "image": "words/batta", "audio": "words/batta"
+    }
+  ]
+}
