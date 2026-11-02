@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../providers/content_providers.dart';
 import '../../../providers/progress_providers.dart';
+import '../../../core/widgets/kids_background.dart';
+import '../../../core/widgets/kids_button.dart';
 
 class LettersScreen extends ConsumerWidget {
   const LettersScreen({super.key});
@@ -13,45 +15,48 @@ class LettersScreen extends ConsumerWidget {
     final stars = ref.watch(starsProvider).valueOrNull ?? const {};
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          iconSize: 36,
-          icon: const Icon(Icons.home),
-          onPressed: () => context.go('/'),
-        ),
-        title: const Text('الحروف'),
-      ),
-      body: repo.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('خطأ: $e')),
-        data: (r) => GridView.builder(
-          padding: const EdgeInsets.all(16),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-          ),
-          itemCount: r.letters.length,
-          itemBuilder: (context, i) {
-            final l = r.letters[i];
-            final earnedStars = stars[l.id] ?? 0;
-            return Stack(
-              children: [
-                Positioned.fill(
-                  child: FilledButton(
-                    onPressed: () => context.push('/letters/${l.id}'),
-                    child: Text(l.character, style: const TextStyle(fontSize: 64)),
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
+              title: const Text('الحروف', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+              centerTitle: true,
+            ),
+            Expanded(
+              child: repo.when(
+                loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
+                error: (e, _) => Center(child: Text('خطأ: $e', style: const TextStyle(color: Colors.white))),
+                data: (r) => GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
                   ),
+                  itemCount: r.letters.length,
+                  itemBuilder: (context, i) {
+                    final l = r.letters[i];
+                    final earnedStars = stars[l.id] ?? 0;
+                    return Stack(
+                      children: [
+                        KidsButton(
+                          color: Colors.white,
+                          height: 100,
+                          onTap: () => context.push('/letters/${l.id}'),
+                          child: Text(l.character, style: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                        ),
+                        if (earnedStars > 0)
+                          const PositionedDirectional(top: 4, end: 4, child: Icon(Icons.star, color: Colors.amber, size: 32)),
+                      ],
+                    );
+                  },
                 ),
-                if (earnedStars > 0)
-                  const PositionedDirectional(
-                    top: 6,
-                    end: 6,
-                    child: Icon(Icons.star, color: Colors.amber, size: 28),
-                  ),
-              ],
-            );
-          },
+              ),
+            ),
+          ],
         ),
       ),
     );

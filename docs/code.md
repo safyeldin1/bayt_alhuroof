@@ -1,5 +1,5 @@
 # 💻 كود المشروع الكامل
-> آخر تحديث: 2026-11-03 00:08:30
+> آخر تحديث: 2026-11-03 00:18:54
 ```yaml
 name: bayt_alhuroof
 description: "A new Flutter project."
@@ -78,6 +78,169 @@ class BaytApp extends ConsumerWidget {
       ],
       theme: AppTheme.light,
       routerConfig: router,
+    );
+  }
+}
+```
+## 📄 `lib/core/animations/bounce_in.dart`
+```dart
+import 'package:flutter/material.dart';
+
+class BounceIn extends StatefulWidget {
+  const BounceIn({super.key, required this.child, this.duration = const Duration(milliseconds: 600)});
+  final Widget child;
+  final Duration duration;
+
+  @override
+  State<BounceIn> createState() => _BounceInState();
+}
+
+class _BounceInState extends State<BounceIn> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: widget.duration);
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.elasticOut);
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => ScaleTransition(scale: _animation, child: widget.child);
+}
+```
+## 📄 `lib/core/animations/floating.dart`
+```dart
+import 'dart:math';
+import 'package:flutter/material.dart';
+
+class Floating extends StatefulWidget {
+  const Floating({super.key, required this.child});
+  final Widget child;
+
+  @override
+  State<Floating> createState() => _FloatingState();
+}
+
+class _FloatingState extends State<Floating> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 3))..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final offset = sin(_controller.value * 2 * pi) * 8;
+        return Transform.translate(offset: Offset(0, offset), child: child);
+      },
+      child: widget.child,
+    );
+  }
+}
+```
+## 📄 `lib/core/animations/pulse_hint.dart`
+```dart
+import 'package:flutter/material.dart';
+
+class PulseHint extends StatefulWidget {
+  const PulseHint({super.key, required this.child});
+  final Widget child;
+
+  @override
+  State<PulseHint> createState() => _PulseHintState();
+}
+
+class _PulseHintState extends State<PulseHint> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat(reverse: true);
+    _animation = Tween<double>(begin: 1.0, end: 1.15).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => ScaleTransition(scale: _animation, child: widget.child);
+}
+```
+## 📄 `lib/core/animations/star_burst.dart`
+```dart
+import 'dart:math';
+import 'package:flutter/material.dart';
+
+class StarBurst extends StatefulWidget {
+  const StarBurst({super.key, required this.stars});
+  final int stars;
+
+  @override
+  State<StarBurst> createState() => _StarBurstState();
+}
+
+class _StarBurstState extends State<StarBurst> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500))..forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Stack(
+          alignment: Alignment.center,
+          children: List.generate(widget.stars * 4, (index) {
+            final angle = (index / (widget.stars * 4)) * 2 * pi;
+            final distance = 120 * _controller.value;
+            final dx = cos(angle) * distance;
+            final dy = sin(angle) * distance;
+            return Transform.translate(
+              offset: Offset(dx, dy),
+              child: Opacity(
+                opacity: 1.0 - _controller.value,
+                child: Icon(Icons.star, color: Colors.amber.shade400, size: 40),
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 }
@@ -194,6 +357,131 @@ class AppTheme {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         fontFamily: 'Cairo',
       );
+}
+```
+## 📄 `lib/core/widgets/kids_background.dart`
+```dart
+import 'package:flutter/material.dart';
+
+class KidsBackground extends StatelessWidget {
+  const KidsBackground({super.key, required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF64B5F6), Color(0xFF81D4FA)], // سماء زرقاء
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: CustomPaint(painter: _CartoonBackgroundPainter()),
+          ),
+          SafeArea(child: child),
+        ],
+      ),
+    );
+  }
+}
+
+class _CartoonBackgroundPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 1. الشمس
+    final sunPaint = Paint()..color = const Color(0xFFFFEB3B);
+    canvas.drawCircle(Offset(size.width * 0.85, size.height * 0.15), 60, sunPaint);
+    
+    // 2. السحاب
+    final cloudPaint = Paint()..color = Colors.white.withOpacity(0.8);
+    _drawCloud(canvas, Offset(size.width * 0.2, size.height * 0.1), 1.0, cloudPaint);
+    _drawCloud(canvas, Offset(size.width * 0.6, size.height * 0.25), 0.8, cloudPaint);
+
+    // 3. التلال الخضراء
+    final hillPaint1 = Paint()..color = const Color(0xFF81C784);
+    final path1 = Path()
+      ..moveTo(0, size.height)
+      ..quadraticBezierTo(size.width * 0.2, size.height * 0.7, size.width * 0.6, size.height)
+      ..close();
+    canvas.drawPath(path1, hillPaint1);
+
+    final hillPaint2 = Paint()..color = const Color(0xFF66BB6A);
+    final path2 = Path()
+      ..moveTo(size.width * 0.4, size.height)
+      ..quadraticBezierTo(size.width * 0.8, size.height * 0.6, size.width, size.height)
+      ..close();
+    canvas.drawPath(path2, hillPaint2);
+  }
+
+  void _drawCloud(Canvas canvas, Offset center, double scale, Paint paint) {
+    canvas.drawCircle(center, 30 * scale, paint);
+    canvas.drawCircle(center.translate(-30 * scale, 10 * scale), 20 * scale, paint);
+    canvas.drawCircle(center.translate(30 * scale, 10 * scale), 25 * scale, paint);
+    canvas.drawRect(Rect.fromLTRB(center.dx - 30 * scale, center.dy, center.dx + 30 * scale, center.dy + 30 * scale), paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+```
+## 📄 `lib/core/widgets/kids_button.dart`
+```dart
+import 'package:flutter/material.dart';
+
+class KidsButton extends StatefulWidget {
+  const KidsButton({
+    super.key,
+    required this.onTap,
+    required this.color,
+    required this.child,
+    this.width = 180, // مربع افتراضي
+    this.height = 180,
+  });
+  final VoidCallback onTap;
+  final Color color;
+  final Widget child;
+  final double width;
+  final double height;
+
+  @override
+  State<KidsButton> createState() => _KidsButtonState();
+}
+
+class _KidsButtonState extends State<KidsButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: widget.onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
+        width: widget.width,
+        height: widget.height,
+        decoration: BoxDecoration(
+          color: widget.color,
+          borderRadius: BorderRadius.circular(40),
+          boxShadow: [
+            BoxShadow(
+              color: widget.color.withOpacity(0.8),
+              offset: Offset(0, _isPressed ? 4 : 12),
+              blurRadius: 0,
+            ),
+          ],
+          border: Border.all(color: Colors.white.withOpacity(0.5), width: 6),
+        ),
+        transform: Matrix4.translationValues(0, _isPressed ? 8 : 0, 0),
+        child: Center(child: widget.child),
+      ),
+    );
+  }
 }
 ```
 ## 📄 `lib/data/content/content_loader.dart`
@@ -2153,34 +2441,62 @@ class RecognizeLetterGame extends StatelessWidget {
 ```dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/animations/bounce_in.dart';
+import '../../core/animations/floating.dart';
+import '../../core/widgets/kids_background.dart';
+import '../../core/widgets/kids_button.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    Widget bigButton(String label, String route) => SizedBox(
-          width: double.infinity,
-          height: 120,
-          child: FilledButton(
-            onPressed: () => context.go(route),
-            child: Text(label, style: const TextStyle(fontSize: 36)),
-          ),
-        );
-
     return Scaffold(
-      body: SafeArea(
+      body: KidsBackground(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('بيت الحروف',
-                  style: Theme.of(context).textTheme.headlineMedium),
-              const SizedBox(height: 32),
-              bigButton('الحروف', '/letters'),
-              const SizedBox(height: 16),
-              bigButton('الأرقام', '/numbers'),
+              const Floating(
+                child: BounceIn(
+                  child: Text(
+                    'بيت الحروف',
+                    style: TextStyle(
+                      fontSize: 60, 
+                      fontWeight: FontWeight.w900, 
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(color: Color(0xFF00796B), offset: Offset(4, 4), blurRadius: 0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 60),
+              
+              // زر الحروف (مكعب برتقالي)
+              Floating(
+                child: BounceIn(
+                  child: KidsButton(
+                    color: const Color(0xFFFF7043),
+                    onTap: () => context.go('/letters'),
+                    child: const Text('أ', style: TextStyle(fontSize: 80, fontWeight: FontWeight.bold, color: Colors.white)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40),
+              
+              // زر الأرقام (مكعب أزرق)
+              Floating(
+                child: BounceIn(
+                  child: KidsButton(
+                    color: const Color(0xFF29B6F6),
+                    onTap: () => context.go('/numbers'),
+                    child: const Text('١', style: TextStyle(fontSize: 80, fontWeight: FontWeight.bold, color: Colors.white)),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -2198,14 +2514,16 @@ import '../../../data/content/content_repository.dart';
 import '../../../data/models/letter.dart';
 import '../../../providers/audio_providers.dart';
 import '../../../providers/content_providers.dart';
+import '../../../core/animations/bounce_in.dart';
+import '../../../core/animations/pulse_hint.dart';
+import '../../../core/widgets/kids_background.dart';
+import '../../../core/widgets/kids_button.dart';
 
 class LetterLessonScreen extends ConsumerStatefulWidget {
   const LetterLessonScreen({super.key, required this.letterId});
   final String letterId;
-
   @override
-  ConsumerState<LetterLessonScreen> createState() =>
-      _LetterLessonScreenState();
+  ConsumerState<LetterLessonScreen> createState() => _LetterLessonScreenState();
 }
 
 class _LetterLessonScreenState extends ConsumerState<LetterLessonScreen> {
@@ -2217,7 +2535,7 @@ class _LetterLessonScreenState extends ConsumerState<LetterLessonScreen> {
 
   Future<void> _speak() async {
     final repo = await ref.read(contentRepositoryProvider.future);
-    if (!mounted) return; // 👈 إضافة سطر الأمان هنا
+    if (!mounted) return;
     final letter = repo.letterById(widget.letterId);
     if (letter == null) return;
     final word = repo.wordById(letter.primaryWordId);
@@ -2237,39 +2555,34 @@ class _LetterLessonScreenState extends ConsumerState<LetterLessonScreen> {
   Widget build(BuildContext context) {
     final repo = ref.watch(contentRepositoryProvider);
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          iconSize: 36,
-          icon: const Icon(Icons.apps),
-          onPressed: () => context.go('/letters'),
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 40, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go('/letters')),
+            ),
+            Expanded(
+              child: repo.when(
+                loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
+                error: (e, _) => Center(child: Text('خطأ: $e', style: const TextStyle(color: Colors.white))),
+                data: (r) {
+                  final letter = r.letterById(widget.letterId);
+                  if (letter == null) return const Center(child: Text('الحرف غير موجود', style: TextStyle(color: Colors.white)));
+                  return _LessonBody(repo: r, letter: letter, onReplay: _speak);
+                },
+              ),
+            ),
+          ],
         ),
-      ),
-      body: repo.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('خطأ: $e')),
-        data: (r) {
-          final letter = r.letterById(widget.letterId);
-          if (letter == null) {
-            return const Center(child: Text('الحرف غير موجود'));
-          }
-          return _LessonBody(
-            repo: r,
-            letter: letter,
-            onReplay: _speak,
-          );
-        },
       ),
     );
   }
 }
 
 class _LessonBody extends StatelessWidget {
-  const _LessonBody({
-    required this.repo,
-    required this.letter,
-    required this.onReplay,
-  });
-
+  const _LessonBody({required this.repo, required this.letter, required this.onReplay});
   final ContentRepository repo;
   final Letter letter;
   final VoidCallback onReplay;
@@ -2280,85 +2593,110 @@ class _LessonBody extends StatelessWidget {
     final next = repo.nextOf(letter);
     final prev = repo.previousOf(letter);
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(letter.character,
-                style: Theme.of(context).textTheme.displayLarge),
-            Text(letter.name,
-                style: Theme.of(context).textTheme.headlineMedium),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // بطاقة الحرف
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(40),
+              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 10))],
+            ),
+            child: Column(
               children: [
-                for (final k in ['isolated', 'initial', 'medial', 'final'])
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: Text(letter.forms[k] ?? '',
-                        style: const TextStyle(fontSize: 40)),
-                  ),
+                BounceIn(
+                  child: Text(letter.character, style: const TextStyle(fontSize: 160, fontWeight: FontWeight.bold, color: Color(0xFF00796B), height: 1.0)),
+                ),
+                Text(letter.name, style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.orange)),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    for (final k in ['isolated', 'initial', 'medial', 'final'])
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(letter.forms[k] ?? '', style: const TextStyle(fontSize: 40, color: Colors.blueGrey, fontWeight: FontWeight.bold)),
+                      ),
+                  ],
+                ),
               ],
             ),
-            const Spacer(),
-            if (word != null) ...[
-              SizedBox(
-                height: 160,
-                child: Image.asset(
-                  'assets/images/${word.image}.png',
-                  errorBuilder: (_, __, ___) =>
-                      const Icon(Icons.image, size: 96),
-                ),
+          ),
+          const Spacer(),
+          // بطاقة الكلمة والصوت
+          if (word != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: Colors.orange.shade200, width: 2),
               ),
-              Text(word.textVowelled,
-                  style: Theme.of(context).textTheme.headlineMedium),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(word.textVowelled, style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.orange)),
+                  const SizedBox(width: 16),
+                  PulseHint(
+                    child: GestureDetector(
+                      onTap: onReplay,
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: Colors.orange, shape: BoxShape.circle, boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8)]),
+                        child: const Icon(Icons.volume_up, size: 40, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          const Spacer(),
+          // أزرار الأنشطة
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              KidsButton(
+                width: 100,
+                height: 100,
+                color: Colors.purple.shade400,
+                onTap: () => context.push('/letters/${letter.id}/recognize'),
+                child: const Icon(Icons.touch_app, size: 48, color: Colors.white),
+              ),
+              const SizedBox(width: 24),
+              KidsButton(
+                width: 100,
+                height: 100,
+                color: Colors.teal.shade400,
+                onTap: () => context.push('/letters/${letter.id}/trace'),
+                child: const Icon(Icons.draw, size: 48, color: Colors.white),
+              ),
             ],
-            const SizedBox(height: 16),
-            IconButton.filled(
-              iconSize: 56,
-              onPressed: onReplay,
-              icon: const Icon(Icons.volume_up),
-            ),
-            const Spacer(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton.filledTonal(
-                  iconSize: 48,
-                  onPressed: () => context.push('/letters/${letter.id}/recognize'),
-                  icon: const Icon(Icons.touch_app),
-                ),
-                const SizedBox(width: 24),
-                IconButton.filledTonal(
-                  iconSize: 48,
-                  onPressed: () => context.push('/letters/${letter.id}/trace'),
-                  icon: const Icon(Icons.draw),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton.filledTonal(
-                  iconSize: 48,
-                  onPressed: prev == null
-                      ? null
-                      : () => context.pushReplacement('/letters/${prev.id}'),
-                  icon: const Icon(Icons.arrow_back),
-                ),
-                IconButton.filledTonal(
-                  iconSize: 48,
-                  onPressed: next == null
-                      ? null
-                      : () => context.pushReplacement('/letters/${next.id}'),
-                  icon: const Icon(Icons.arrow_forward),
-                ),
-              ],
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 32),
+          // أزرار التنقل
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton.filled(
+                style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.teal),
+                iconSize: 48,
+                onPressed: prev == null ? null : () => context.pushReplacement('/letters/${prev.id}'),
+                icon: const Icon(Icons.arrow_back),
+              ),
+              IconButton.filled(
+                style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.teal),
+                iconSize: 48,
+                onPressed: next == null ? null : () => context.pushReplacement('/letters/${next.id}'),
+                icon: const Icon(Icons.arrow_forward),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+        ],
       ),
     );
   }
@@ -2371,6 +2709,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../providers/content_providers.dart';
 import '../../../providers/progress_providers.dart';
+import '../../../core/widgets/kids_background.dart';
+import '../../../core/widgets/kids_button.dart';
 
 class LettersScreen extends ConsumerWidget {
   const LettersScreen({super.key});
@@ -2381,45 +2721,48 @@ class LettersScreen extends ConsumerWidget {
     final stars = ref.watch(starsProvider).valueOrNull ?? const {};
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          iconSize: 36,
-          icon: const Icon(Icons.home),
-          onPressed: () => context.go('/'),
-        ),
-        title: const Text('الحروف'),
-      ),
-      body: repo.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('خطأ: $e')),
-        data: (r) => GridView.builder(
-          padding: const EdgeInsets.all(16),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-          ),
-          itemCount: r.letters.length,
-          itemBuilder: (context, i) {
-            final l = r.letters[i];
-            final earnedStars = stars[l.id] ?? 0;
-            return Stack(
-              children: [
-                Positioned.fill(
-                  child: FilledButton(
-                    onPressed: () => context.push('/letters/${l.id}'),
-                    child: Text(l.character, style: const TextStyle(fontSize: 64)),
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
+              title: const Text('الحروف', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+              centerTitle: true,
+            ),
+            Expanded(
+              child: repo.when(
+                loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
+                error: (e, _) => Center(child: Text('خطأ: $e', style: const TextStyle(color: Colors.white))),
+                data: (r) => GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
                   ),
+                  itemCount: r.letters.length,
+                  itemBuilder: (context, i) {
+                    final l = r.letters[i];
+                    final earnedStars = stars[l.id] ?? 0;
+                    return Stack(
+                      children: [
+                        KidsButton(
+                          color: Colors.white,
+                          height: 100,
+                          onTap: () => context.push('/letters/${l.id}'),
+                          child: Text(l.character, style: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                        ),
+                        if (earnedStars > 0)
+                          const PositionedDirectional(top: 4, end: 4, child: Icon(Icons.star, color: Colors.amber, size: 32)),
+                      ],
+                    );
+                  },
                 ),
-                if (earnedStars > 0)
-                  const PositionedDirectional(
-                    top: 6,
-                    end: 6,
-                    child: Icon(Icons.star, color: Colors.amber, size: 28),
-                  ),
-              ],
-            );
-          },
+              ),
+            ),
+          ],
         ),
       ),
     );
