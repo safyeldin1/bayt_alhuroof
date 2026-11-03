@@ -1,5 +1,5 @@
 # 💻 كود المشروع الكامل
-> آخر تحديث: 2026-11-03 00:18:54
+> آخر تحديث: 2026-11-03 15:11:19
 ```yaml
 name: bayt_alhuroof
 description: "A new Flutter project."
@@ -317,6 +317,11 @@ import '../../features/letters/presentation/letters_screen.dart';
 import '../../features/letters/presentation/letter_lesson_screen.dart';
 import '../../features/games/presentation/choice_games.dart';
 import '../../features/tracing/presentation/tracing_screen.dart';
+import '../../features/numbers/presentation/numbers_screen.dart';
+import '../../features/numbers/presentation/number_lesson_screen.dart';
+import '../../features/parent_zone/parent_gate_screen.dart';
+import '../../features/parent_zone/parent_screen.dart';
+import '../../providers/parent_providers.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -336,16 +341,70 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/letters/:id/trace',
         builder: (c, s) => TracingScreen(letterId: s.pathParameters['id']!),
       ),
+      GoRoute(path: '/numbers', builder: (c, s) => const NumbersScreen()),
       GoRoute(
-        path: '/numbers',
-        builder: (c, s) => Scaffold(
-          appBar: AppBar(title: const Text('الأرقام')),
-          body: const Center(child: Text('قريباً')),
-        ),
+        path: '/numbers/:id',
+        builder: (c, s) => NumberLessonScreen(numberId: s.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/numbers/:id/pick',
+        builder: (c, s) => PickNumberGame(numberId: s.pathParameters['id']!),
+      ),
+      GoRoute(path: '/parent-gate', builder: (c, s) => const ParentGateScreen()),
+      GoRoute(
+        path: '/parent',
+        builder: (c, s) => const ParentScreen(),
+        redirect: (c, s) => ref.read(parentGateProvider.notifier).isUnlocked ? null : '/parent-gate',
       ),
     ],
   );
 });
+```
+## 📄 `lib/core/settings/app_settings.dart`
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/arabic_numbers.dart';
+
+class AppSettings {
+  const AppSettings({this.voiceVolume = 1.0, this.numeralStyle = NumeralStyle.arabicIndic});
+  final double voiceVolume;
+  final NumeralStyle numeralStyle;
+
+  AppSettings copyWith({double? voiceVolume, NumeralStyle? numeralStyle}) => AppSettings(
+        voiceVolume: voiceVolume ?? this.voiceVolume,
+        numeralStyle: numeralStyle ?? this.numeralStyle,
+      );
+}
+
+final sharedPreferencesProvider = Provider<SharedPreferences>((ref) => throw UnimplementedError());
+
+class SettingsController extends Notifier<AppSettings> {
+  static const _kVolume = 'voice_volume';
+  static const _kNumerals = 'numeral_style';
+
+  @override
+  AppSettings build() {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    final name = prefs.getString(_kNumerals);
+    return AppSettings(
+      voiceVolume: prefs.getDouble(_kVolume) ?? 1.0,
+      numeralStyle: NumeralStyle.values.firstWhere((s) => s.name == name, orElse: () => NumeralStyle.arabicIndic),
+    );
+  }
+
+  Future<void> setVolume(double v) async {
+    state = state.copyWith(voiceVolume: v);
+    await ref.read(sharedPreferencesProvider).setDouble(_kVolume, v);
+  }
+
+  Future<void> setNumerals(NumeralStyle s) async {
+    state = state.copyWith(numeralStyle: s);
+    await ref.read(sharedPreferencesProvider).setString(_kNumerals, s.name);
+  }
+}
+
+final settingsProvider = NotifierProvider<SettingsController, AppSettings>(SettingsController.new);
 ```
 ## 📄 `lib/core/theme/app_theme.dart`
 ```dart
@@ -357,6 +416,16 @@ class AppTheme {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         fontFamily: 'Cairo',
       );
+}
+```
+## 📄 `lib/core/utils/arabic_numbers.dart`
+```dart
+enum NumeralStyle { arabicIndic, western }
+
+String formatNumber(int n, NumeralStyle style) {
+  if (style == NumeralStyle.western) return n.toString();
+  const digits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  return n.toString().split('').map((c) => digits[int.parse(c)]).join();
 }
 ```
 ## 📄 `lib/core/widgets/kids_background.dart`
@@ -491,6 +560,7 @@ import 'package:flutter/services.dart';
 import '../models/letter.dart';
 import '../models/word.dart';
 import '../models/tracing_path.dart';
+import '../models/number_item.dart';
 
 class ContentLoader {
   Future<List<Letter>> loadLetters() async {
@@ -502,6 +572,17 @@ class ContentLoader {
         .where((l) => l.status == 'published')
         .toList()
       ..sort((a, b) => a.order.compareTo(b.order));
+  }
+
+  Future<List<NumberItem>> loadNumbers() async {
+    final raw = await rootBundle.loadString('assets/content/numbers.json');
+    final json = jsonDecode(raw) as Map<String, dynamic>;
+    return (json['items'] as List)
+        .cast<Map<String, dynamic>>()
+        .map(NumberItem.fromJson)
+        .where((n) => n.status == 'published')
+        .toList()
+      ..sort((a, b) => a.value.compareTo(b.value));
   }
 
   Future<TracingPath> loadTracing(String id) async {
@@ -522,6 +603,7 @@ class ContentLoader {
 ```dart
 import '../models/letter.dart';
 import '../models/word.dart';
+import '../models/number_item.dart';
 import 'content_loader.dart';
 
 class ContentRepository {
@@ -530,14 +612,26 @@ class ContentRepository {
 
   List<Letter> letters = [];
   List<Word> words = [];
+  List<NumberItem> numbers = [];
 
   Future<void> load() async {
     letters = await _loader.loadLetters();
     words = await _loader.loadWords();
+    numbers = await _loader.loadNumbers();
   }
 
   Letter? letterById(String id) {
     for (final l in letters) { if (l.id == id) return l; }
+    return null;
+  }
+
+  NumberItem? numberById(String id) {
+    for (final n in numbers) { if (n.id == id) return n; }
+    return null;
+  }
+
+  NumberItem? numberByValue(int val) {
+    for (final n in numbers) { if (n.value == val) return n; }
     return null;
   }
 
@@ -1969,6 +2063,35 @@ class Letter {
       );
 }
 ```
+## 📄 `lib/data/models/number_item.dart`
+```dart
+class NumberItem {
+  const NumberItem({
+    required this.id,
+    required this.value,
+    required this.nameText,
+    required this.audio,
+    required this.objectImage,
+    required this.status,
+  });
+
+  final String id;
+  final int value;
+  final String nameText;
+  final String audio;
+  final String objectImage;
+  final String status;
+
+  factory NumberItem.fromJson(Map<String, dynamic> j) => NumberItem(
+        id: j['id'] as String,
+        value: j['value'] as int,
+        nameText: j['nameText'] as String,
+        audio: j['audio'] as String,
+        objectImage: j['objectImage'] as String,
+        status: j['status'] as String? ?? 'published',
+      );
+}
+```
 ## 📄 `lib/data/models/tracing_path.dart`
 ```dart
 import 'package:flutter/material.dart';
@@ -2090,6 +2213,12 @@ class ProgressRepository {
           );
     });
   }
+
+
+  Future<void> resetAll() => _db.transaction(() async {
+    await _db.delete(_db.activityResults).go();
+    await _db.delete(_db.itemProgress).go();
+  });
 
   Stream<Map<String, int>> watchStars() {
     return _db.select(_db.itemProgress).watch().map(
@@ -2402,6 +2531,7 @@ class _Result extends StatelessWidget {
 ```dart
 import 'package:flutter/material.dart';
 import '../../../data/models/letter.dart';
+import '../../../data/models/number_item.dart';
 import '../../../providers/content_providers.dart';
 import '../domain/engines/choice_engine.dart';
 import 'choice_game_screen.dart';
@@ -2436,6 +2566,46 @@ class RecognizeLetterGame extends StatelessWidget {
         ),
       );
 }
+
+class PickNumberGame extends StatelessWidget {
+  const PickNumberGame({super.key, required this.numberId});
+  final String numberId;
+
+  String _formatNumber(int n) {
+    const digits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    return n.toString().split('').map((c) => digits[int.parse(c)]).join();
+  }
+
+  @override
+  Widget build(BuildContext context) => ChoiceGameScreen<NumberItem>(
+        activityId: 'pick_number_$numberId',
+        contentId: numberId,
+        kind: 'number',
+        backRoute: '/numbers/$numberId',
+        idOf: (n) => n.id,
+        setup: (ref) async {
+          final repo = await ref.read(contentRepositoryProvider.future);
+          final n = repo.numberById(numberId);
+          if (n == null) return const ChoiceGameSetup(questions: []);
+          
+          final targets = [
+            n,
+            if (repo.numberByValue(n.value - 1) != null) repo.numberByValue(n.value - 1)!,
+            if (repo.numberByValue(n.value + 1) != null) repo.numberByValue(n.value + 1)!,
+          ];
+          
+          return ChoiceGameSetup(
+            instructionText: 'اختر الرقم الصحيح',
+            questions: ChoiceEngine<NumberItem>((x) => x.id).build(
+              targets: targets,
+              pool: repo.numbers,
+              rounds: targets.length,
+            ),
+          );
+        },
+        optionBuilder: (c, ref, n) => Text(_formatNumber(n.value), style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold)),
+      );
+}
 ```
 ## 📄 `lib/features/home/home_screen.dart`
 ```dart
@@ -2445,6 +2615,7 @@ import '../../core/animations/bounce_in.dart';
 import '../../core/animations/floating.dart';
 import '../../core/widgets/kids_background.dart';
 import '../../core/widgets/kids_button.dart';
+import '../parent_zone/hold_to_open.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -2453,52 +2624,63 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: KidsBackground(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Floating(
-                child: BounceIn(
-                  child: Text(
-                    'بيت الحروف',
-                    style: TextStyle(
-                      fontSize: 60, 
-                      fontWeight: FontWeight.w900, 
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(color: Color(0xFF00796B), offset: Offset(4, 4), blurRadius: 0),
-                      ],
+        child: Stack(
+          children: [
+            // المحتوى الأساسي
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Floating(
+                    child: BounceIn(
+                      child: Text(
+                        'بيت الحروف',
+                        style: TextStyle(
+                          fontSize: 60,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          shadows: [
+                            Shadow(color: Color(0xFF00796B), offset: Offset(4, 4), blurRadius: 0),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 60),
-              
-              // زر الحروف (مكعب برتقالي)
-              Floating(
-                child: BounceIn(
-                  child: KidsButton(
-                    color: const Color(0xFFFF7043),
-                    onTap: () => context.go('/letters'),
-                    child: const Text('أ', style: TextStyle(fontSize: 80, fontWeight: FontWeight.bold, color: Colors.white)),
+                  const SizedBox(height: 60),
+                  Floating(
+                    child: BounceIn(
+                      child: KidsButton(
+                        color: const Color(0xFFFF7043),
+                        onTap: () => context.go('/letters'),
+                        child: const Text('أ', style: TextStyle(fontSize: 80, fontWeight: FontWeight.bold, color: Colors.white)),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 40),
-              
-              // زر الأرقام (مكعب أزرق)
-              Floating(
-                child: BounceIn(
-                  child: KidsButton(
-                    color: const Color(0xFF29B6F6),
-                    onTap: () => context.go('/numbers'),
-                    child: const Text('١', style: TextStyle(fontSize: 80, fontWeight: FontWeight.bold, color: Colors.white)),
+                  const SizedBox(height: 40),
+                  Floating(
+                    child: BounceIn(
+                      child: KidsButton(
+                        color: const Color(0xFF29B6F6),
+                        onTap: () => context.go('/numbers'),
+                        child: const Text('١', style: TextStyle(fontSize: 80, fontWeight: FontWeight.bold, color: Colors.white)),
+                      ),
+                    ),
                   ),
+                ],
+              ),
+            ),
+            // زر القفل في الأعلى
+            PositionedDirectional(
+              top: 10,
+              end: 10,
+              child: SafeArea(
+                child: HoldToOpen(
+                  onOpen: () => context.push('/parent-gate'),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -2769,6 +2951,534 @@ class LettersScreen extends ConsumerWidget {
   }
 }
 ```
+## 📄 `lib/features/numbers/domain/counting_state.dart`
+```dart
+class CountingState {
+  CountingState(this.total);
+  final int total;
+  final Set<int> counted = {};
+
+  int tap(int index) {
+    if (counted.contains(index)) return 0;
+    counted.add(index);
+    return counted.length;
+  }
+
+  bool get complete => counted.length == total;
+  void reset() => counted.clear();
+}
+```
+## 📄 `lib/features/numbers/presentation/number_lesson_screen.dart`
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/animations/bounce_in.dart';
+import '../../../core/animations/pulse_hint.dart';
+import '../../../core/widgets/kids_background.dart';
+import '../../../core/widgets/kids_button.dart';
+import '../../../providers/audio_providers.dart';
+import '../../../providers/content_providers.dart';
+import '../../../providers/progress_providers.dart';
+import '../domain/counting_state.dart';
+
+class NumberLessonScreen extends ConsumerStatefulWidget {
+  const NumberLessonScreen({super.key, required this.numberId});
+  final String numberId;
+  @override
+  ConsumerState<NumberLessonScreen> createState() => _NumberLessonScreenState();
+}
+
+class _NumberLessonScreenState extends ConsumerState<NumberLessonScreen> {
+  CountingState? _counting;
+  bool _done = false;
+
+  String _formatNumber(int n) {
+    const digits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    return n.toString().split('').map((c) => digits[int.parse(c)]).join();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _start());
+  }
+
+  Future<void> _start() async {
+    final repo = await ref.read(contentRepositoryProvider.future);
+    if (!mounted) return;
+    final n = repo.numberById(widget.numberId);
+    if (n == null) return;
+    setState(() { _counting = CountingState(n.value); _done = false; });
+    ref.read(audioServiceProvider).playVoice(n.audio, force: true);
+  }
+
+  Future<void> _onTapObject(int index) async {
+    final repo = await ref.read(contentRepositoryProvider.future);
+    final c = _counting;
+    final n = repo.numberById(widget.numberId);
+    if (c == null || n == null) return;
+    
+    final spoken = c.tap(index);
+    if (spoken == 0) return;
+    setState(() {});
+    
+    final item = repo.numberByValue(spoken);
+    if (item != null) ref.read(audioServiceProvider).playVoice(item.audio, force: true);
+
+    if (c.complete && !_done) {
+      setState(() => _done = true);
+      ref.read(progressRepositoryProvider).recordResult(
+            activityId: 'count_${n.id}',
+            contentId: n.id,
+            kind: 'number',
+            attempts: 1,
+            correct: 1,
+            stars: 3,
+          );
+    }
+  }
+
+  @override
+  void dispose() {
+    ref.read(audioServiceProvider).stop();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final repo = ref.watch(contentRepositoryProvider);
+    return Scaffold(
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 40, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go('/numbers')),
+              title: const Text('درس الرقم', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+              centerTitle: true,
+            ),
+            Expanded(
+              child: repo.when(
+                loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
+                error: (e, _) => Center(child: Text('خطأ: $e', style: const TextStyle(color: Colors.white))),
+                data: (r) {
+                  final n = r.numberById(widget.numberId);
+                  final c = _counting;
+                  if (n == null || c == null) return const Center(child: CircularProgressIndicator(color: Colors.white));
+                  
+                  return Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        // بطاقة الرقم
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(40),
+                            boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 10))],
+                          ),
+                          child: Column(
+                            children: [
+                              BounceIn(child: Text(_formatNumber(n.value), style: const TextStyle(fontSize: 140, fontWeight: FontWeight.bold, color: Color(0xFF29B6F6), height: 1.0))),
+                              Text(n.nameText, style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.orange)),
+                            ],
+                          ),
+                        ),
+                        const Spacer(),
+                        // منطقة العد
+                        if (n.value > 0) Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: [
+                            for (var i = 0; i < n.value; i++)
+                              GestureDetector(
+                                onTap: () => _onTapObject(i),
+                                child: AnimatedOpacity(
+                                  duration: const Duration(milliseconds: 200),
+                                  opacity: c.counted.contains(i) ? 1.0 : 0.5,
+                                  child: Container(
+                                    width: 80,
+                                    height: 80,
+                                    decoration: BoxDecoration(
+                                      color: c.counted.contains(i) ? Colors.green.shade100 : Colors.white,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: c.counted.contains(i) ? Colors.green : Colors.grey.shade400, width: 4),
+                                      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
+                                    ),
+                                    child: Center(
+                                      child: c.counted.contains(i) 
+                                        ? const Icon(Icons.check, color: Colors.green, size: 40)
+                                        : const Icon(Icons.apple, color: Colors.redAccent, size: 40),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ) else const Text('صِفْر (لَا شَيْء)', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white)),
+                        const Spacer(),
+                        if (_done) const Icon(Icons.star, size: 80, color: Colors.amber),
+                        const Spacer(),
+                        // أزرار التحكم
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            KidsButton(width: 80, height: 80, color: Colors.blue.shade400, onTap: _start, child: const Icon(Icons.replay, size: 40, color: Colors.white)),
+                            const SizedBox(width: 24),
+                            KidsButton(width: 80, height: 80, color: Colors.purple.shade400, onTap: () => context.push('/numbers/${n.id}/pick'), child: const Icon(Icons.touch_app, size: 40, color: Colors.white)),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+## 📄 `lib/features/numbers/presentation/numbers_screen.dart`
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../providers/content_providers.dart';
+import '../../../providers/progress_providers.dart';
+import '../../../core/widgets/kids_background.dart';
+import '../../../core/widgets/kids_button.dart';
+import '../../../core/animations/bounce_in.dart';
+
+class NumbersScreen extends ConsumerWidget {
+  const NumbersScreen({super.key});
+
+  String _formatNumber(int n) {
+    const digits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    return n.toString().split('').map((c) => digits[int.parse(c)]).join();
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final repo = ref.watch(contentRepositoryProvider);
+    final stars = ref.watch(starsProvider).valueOrNull ?? const {};
+
+    return Scaffold(
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
+              title: const Text('الأرقام', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+              centerTitle: true,
+            ),
+            Expanded(
+              child: repo.when(
+                loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
+                error: (e, _) => Center(child: Text('خطأ: $e', style: const TextStyle(color: Colors.white))),
+                data: (r) => GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                  ),
+                  itemCount: r.numbers.length,
+                  itemBuilder: (context, i) {
+                    final n = r.numbers[i];
+                    final earnedStars = stars[n.id] ?? 0;
+                    return Stack(
+                      children: [
+                        BounceIn(
+                          child: KidsButton(
+                            color: const Color(0xFF29B6F6), // أزرق مبهج
+                            height: 100,
+                            onTap: () => context.push('/numbers/${n.id}'),
+                            child: Text(_formatNumber(n.value), style: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Colors.white)),
+                          ),
+                        ),
+                        if (earnedStars > 0)
+                          const PositionedDirectional(top: 4, end: 4, child: Icon(Icons.star, color: Colors.amber, size: 32)),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+## 📄 `lib/features/parent_zone/hold_to_open.dart`
+```dart
+import 'package:flutter/material.dart';
+
+class HoldToOpen extends StatefulWidget {
+  const HoldToOpen({super.key, required this.onOpen, this.duration = const Duration(seconds: 3)});
+  final VoidCallback onOpen;
+  final Duration duration;
+  @override
+  State<HoldToOpen> createState() => _HoldToOpenState();
+}
+
+class _HoldToOpenState extends State<HoldToOpen> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: widget.duration)
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          widget.onOpen();
+          _controller.reset();
+        }
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) => _controller.reverse(),
+      onTapCancel: () => _controller.reverse(),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                return SizedBox(
+                  width: 60,
+                  height: 60,
+                  child: CircularProgressIndicator(
+                    value: _controller.value,
+                    color: Colors.white,
+                    backgroundColor: Colors.white24,
+                    strokeWidth: 5,
+                  ),
+                );
+              },
+            ),
+            const Icon(Icons.lock_outline, color: Colors.white, size: 28),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+## 📄 `lib/features/parent_zone/parent_gate_challenge.dart`
+```dart
+import 'dart:math';
+
+class ParentGateChallenge {
+  ParentGateChallenge({required this.a, required this.b, required this.answer, required this.options});
+  final int a, b, answer;
+  final List<int> options;
+
+  factory ParentGateChallenge.generate([Random? rng]) {
+    final r = rng ?? Random();
+    final a = r.nextInt(6) + 4; // 4 to 9
+    final b = r.nextInt(6) + 4; // 4 to 9
+    final answer = a * b;
+    final options = <int>{answer, answer + 2, answer - 3, answer + 5}.toList()..shuffle(r);
+    return ParentGateChallenge(a: a, b: b, answer: answer, options: options);
+  }
+
+  bool check(int v) => v == answer;
+}
+```
+## 📄 `lib/features/parent_zone/parent_gate_screen.dart`
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../core/settings/app_settings.dart';
+import '../../core/utils/arabic_numbers.dart';
+import '../../core/widgets/kids_background.dart';
+import '../../providers/parent_providers.dart';
+import 'parent_gate_challenge.dart';
+
+class ParentGateScreen extends ConsumerStatefulWidget {
+  const ParentGateScreen({super.key});
+  @override
+  ConsumerState<ParentGateScreen> createState() => _ParentGateScreenState();
+}
+
+class _ParentGateScreenState extends ConsumerState<ParentGateScreen> {
+  late ParentGateChallenge _challenge = ParentGateChallenge.generate();
+
+  void _pick(int v) {
+    if (_challenge.check(v)) {
+      ref.read(parentGateProvider.notifier).unlock();
+      context.go('/parent');
+    } else {
+      setState(() => _challenge = ParentGateChallenge.generate());
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final style = ref.watch(settingsProvider).numeralStyle;
+    String f(int n) => formatNumber(n, style);
+
+    return Scaffold(
+      body: KidsBackground(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.security, size: 80, color: Colors.white),
+              const SizedBox(height: 16),
+              const Text('منطقة وليّ الأمر', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+              const Text('للكبار فقط: أجب على السؤال', style: TextStyle(fontSize: 20, color: Colors.white70)),
+              const SizedBox(height: 40),
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
+                child: Column(
+                  children: [
+                    Text('${f(_challenge.a)} × ${f(_challenge.b)} = ؟', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 24),
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 16,
+                      children: [
+                        for (final o in _challenge.options)
+                          SizedBox(
+                            width: 80,
+                            height: 80,
+                            child: FilledButton(
+                              onPressed: () => _pick(o),
+                              child: Text(f(o), style: const TextStyle(fontSize: 28)),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 40),
+              TextButton(
+                onPressed: () => context.go('/'),
+                child: const Text('رجوع', style: TextStyle(color: Colors.white, fontSize: 20)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
+## 📄 `lib/features/parent_zone/parent_screen.dart`
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../core/settings/app_settings.dart';
+import '../../core/utils/arabic_numbers.dart';
+import '../../providers/parent_providers.dart';
+import '../../providers/progress_providers.dart';
+
+class ParentScreen extends ConsumerWidget {
+  const ParentScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final ctrl = ref.read(settingsProvider.notifier);
+    final stars = ref.watch(starsProvider).valueOrNull ?? const {};
+    final learned = stars.values.where((s) => s > 0).length;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('لوحة وليّ الأمر'),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () {
+            ref.read(parentGateProvider.notifier).lock();
+            context.go('/');
+          },
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          const Text('مستوى الصوت', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          Slider(
+            value: settings.voiceVolume,
+            onChanged: (v) => ctrl.setVolume(v),
+          ),
+          const SizedBox(height: 24),
+          const Text('شكل الأرقام', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          SegmentedButton<NumeralStyle>(
+            segments: const [
+              ButtonSegment(value: NumeralStyle.arabicIndic, label: Text('١٢٣')),
+              ButtonSegment(value: NumeralStyle.western, label: Text('123')),
+            ],
+            selected: {settings.numeralStyle},
+            onSelectionChanged: (s) => ctrl.setNumerals(s.first),
+          ),
+          const SizedBox(height: 32),
+          Text('تقدم الطفل: $learned عنصر تم تعلمه', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 32),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            label: const Text('مسح كل التقدم', style: TextStyle(color: Colors.red)),
+            onPressed: () async {
+              final ok = await showDialog<bool>(
+                context: context,
+                builder: (c) => AlertDialog(
+                  title: const Text('مسح كل التقدم؟'),
+                  content: const Text('هل أنت متأكد؟ سيتم حذف كل النجوم والنتائج نهائياً.'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('إلغاء')),
+                    TextButton(onPressed: () => Navigator.pop(c, true), child: const Text('مسح', style: TextStyle(color: Colors.red))),
+                  ],
+                ),
+              );
+              if (ok == true) {
+                await ref.read(progressRepositoryProvider).resetAll();
+                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم مسح التقدم')));
+              }
+            },
+          ),
+          const SizedBox(height: 40),
+          const Text(
+            'الخصوصية: لا يجمع التطبيق أي بيانات شخصية، ولا يتصل بالإنترنت إطلاقاً. يُحفظ التقدم على هذا الجهاز فقط.',
+            style: TextStyle(color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
 ## 📄 `lib/features/tracing/domain/stroke_tracker.dart`
 ```dart
 import 'dart:math' as math;
@@ -3016,7 +3726,9 @@ class _TracingScreenState extends ConsumerState<TracingScreen> {
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'app.dart';
+import 'core/settings/app_settings.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -3026,7 +3738,11 @@ Future<void> main() async {
   } catch (e) {
     debugPrint('AudioSession init failed: $e');
   }
-  runApp(const ProviderScope(child: BaytApp()));
+  final prefs = await SharedPreferences.getInstance();
+  runApp(ProviderScope(
+    overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    child: const BaytApp(),
+  ));
 }
 ```
 ## 📄 `lib/providers/audio_providers.dart`
@@ -3051,6 +3767,23 @@ final contentRepositoryProvider = FutureProvider<ContentRepository>((ref) async 
   await repo.load();
   return repo;
 });
+```
+## 📄 `lib/providers/parent_providers.dart`
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class ParentGate extends Notifier<DateTime?> {
+  @override
+  DateTime? build() => null;
+  void unlock() => state = DateTime.now().add(const Duration(minutes: 5));
+  void lock() => state = null;
+  bool get isUnlocked {
+    final until = state;
+    return until != null && DateTime.now().isBefore(until);
+  }
+}
+
+final parentGateProvider = NotifierProvider<ParentGate, DateTime?>(ParentGate.new);
 ```
 ## 📄 `lib/providers/progress_providers.dart`
 ```dart

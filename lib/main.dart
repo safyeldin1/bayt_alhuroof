@@ -1,7 +1,9 @@
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'app.dart';
+import 'core/settings/app_settings.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,5 +13,9 @@ Future<void> main() async {
   } catch (e) {
     debugPrint('AudioSession init failed: $e');
   }
-  runApp(const ProviderScope(child: BaytApp()));
+  final prefs = await SharedPreferences.getInstance();
+  runApp(ProviderScope(
+    overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    child: const BaytApp(),
+  ));
 }

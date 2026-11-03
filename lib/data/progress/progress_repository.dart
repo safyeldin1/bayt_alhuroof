@@ -48,6 +48,12 @@ class ProgressRepository {
     });
   }
 
+
+  Future<void> resetAll() => _db.transaction(() async {
+    await _db.delete(_db.activityResults).go();
+    await _db.delete(_db.itemProgress).go();
+  });
+
   Stream<Map<String, int>> watchStars() {
     return _db.select(_db.itemProgress).watch().map(
           (rows) => {for (final r in rows) r.contentId: r.bestStars},

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../models/letter.dart';
 import '../models/word.dart';
 import '../models/tracing_path.dart';
+import '../models/number_item.dart';
 
 class ContentLoader {
   Future<List<Letter>> loadLetters() async {
@@ -14,6 +15,17 @@ class ContentLoader {
         .where((l) => l.status == 'published')
         .toList()
       ..sort((a, b) => a.order.compareTo(b.order));
+  }
+
+  Future<List<NumberItem>> loadNumbers() async {
+    final raw = await rootBundle.loadString('assets/content/numbers.json');
+    final json = jsonDecode(raw) as Map<String, dynamic>;
+    return (json['items'] as List)
+        .cast<Map<String, dynamic>>()
+        .map(NumberItem.fromJson)
+        .where((n) => n.status == 'published')
+        .toList()
+      ..sort((a, b) => a.value.compareTo(b.value));
   }
 
   Future<TracingPath> loadTracing(String id) async {

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "items": [
+    { "id": "number_0", "value": 0, "nameText": "صِفْر", "audio": "numbers/0", "objectImage": "ui/empty", "status": "published" },
+    { "id": "number_1", "value": 1, "nameText": "وَاحِد", "audio": "numbers/1", "objectImage": "ui/apple", "status": "published" },
+    { "id": "number_2", "value": 2, "nameText": "اِثْنَان", "audio": "numbers/2", "objectImage": "ui/apple", "status": "published" },
+    { "id": "number_3", "value": 3, "nameText": "ثَلَاثَة", "audio": "numbers/3", "objectImage": "ui/apple", "status": "published" },
+    { "id": "number_4", "value": 4, "nameText": "أَرْبَعَة", "audio": "numbers/4", "objectImage": "ui/apple", "status": "published" },
+    { "id": "number_5", "value": 5, "nameText": "خَمْسَة", "audio": "numbers/5", "objectImage": "ui/apple", "status": "published" }
+  ]
+}

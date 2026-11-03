@@ -1,5 +1,6 @@
 import '../models/letter.dart';
 import '../models/word.dart';
+import '../models/number_item.dart';
 import 'content_loader.dart';
 
 class ContentRepository {
@@ -8,14 +9,26 @@ class ContentRepository {
 
   List<Letter> letters = [];
   List<Word> words = [];
+  List<NumberItem> numbers = [];
 
   Future<void> load() async {
     letters = await _loader.loadLetters();
     words = await _loader.loadWords();
+    numbers = await _loader.loadNumbers();
   }
 
   Letter? letterById(String id) {
     for (final l in letters) { if (l.id == id) return l; }
+    return null;
+  }
+
+  NumberItem? numberById(String id) {
+    for (final n in numbers) { if (n.id == id) return n; }
+    return null;
+  }
+
+  NumberItem? numberByValue(int val) {
+    for (final n in numbers) { if (n.value == val) return n; }
     return null;
   }
 
