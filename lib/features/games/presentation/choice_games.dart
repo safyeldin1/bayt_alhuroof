@@ -97,14 +97,19 @@ class MatchImageGame extends StatelessWidget {
             promptBuilder: (ctx, q) {
               if (word == null) return const SizedBox.shrink();
               return Container(
-                width: 160, height: 160,
-                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)]),
-                child: ClipOval(
-                  child: Image.asset(
+                width: 180, height: 200,
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30), boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10)]),
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(child: Image.asset(
                     'assets/images/${word.image}.png',
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Center(child: Text(word.emoji, style: const TextStyle(fontSize: 80))),
-                  ),
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => Center(child: Text(word.emoji, style: const TextStyle(fontSize: 60))),
+                    )),
+                    Text(word.text, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                  ],
                 ),
               );
             },

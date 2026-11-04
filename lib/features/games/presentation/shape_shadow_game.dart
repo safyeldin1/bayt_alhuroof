@@ -20,6 +20,7 @@ class _ShapeShadowGameState extends ConsumerState<ShapeShadowGame> {
   List<ShapeItem> _options = [];
   Map<String, bool> _matched = {};
   bool _isFinished = false;
+  String? _draggedShapeId;
 
   @override
   void initState() {
@@ -136,6 +137,9 @@ class _ShapeShadowGameState extends ConsumerState<ShapeShadowGame> {
 
             return Draggable<ShapeItem>(
               data: shape,
+              onDragStarted: () => setState(() => _draggedShapeId = shape.id),
+              onDragEnd: (_) => setState(() => _draggedShapeId = null),
+              onDraggableCanceled: (_, __) => setState(() => _draggedShapeId = null),
               feedback: Material(
                 color: Colors.transparent,
                 child: SizedBox(
@@ -143,7 +147,7 @@ class _ShapeShadowGameState extends ConsumerState<ShapeShadowGame> {
                   child: CustomPaint(painter: ShapePainter(shape.type, Colors.blue.shade400)),
                 ),
               ),
-              childWhenDragging: const SizedBox(width: 80, height: 80),
+              childWhenDragging: _draggedShapeId == shape.id ? const SizedBox(width: 80, height: 80) : null,
               child: SizedBox(
                 width: 80, height: 80,
                 child: CustomPaint(painter: ShapePainter(shape.type, Colors.blue.shade400)),

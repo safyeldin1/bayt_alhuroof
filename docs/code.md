@@ -1,5 +1,5 @@
 # 💻 كود المشروع الكامل
-> آخر تحديث: 2026-11-04 20:30:08
+> آخر تحديث: 2026-11-04 20:58:56
 ```yaml
 name: bayt_alhuroof
 description: "A new Flutter project."
@@ -538,6 +538,88 @@ class _AnimatedImageState extends State<AnimatedImage> with SingleTickerProvider
             ),
           );
         },
+      ),
+    );
+  }
+}
+```
+## 📄 `lib/core/widgets/feedback_popup.dart`
+```dart
+import 'package:flutter/material.dart';
+
+class FeedbackPopup extends StatefulWidget {
+  const FeedbackPopup({super.key, required this.isCorrect, required this.onDismiss});
+  final bool isCorrect;
+  final VoidCallback onDismiss;
+
+  @override
+  State<FeedbackPopup> createState() => _FeedbackPopupState();
+}
+
+class _FeedbackPopupState extends State<FeedbackPopup> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _scaleAnimation = CurvedAnimation(parent: _controller, curve: Curves.elasticOut);
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: Material(
+        color: Colors.black45,
+        child: Center(
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20)],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    widget.isCorrect ? Icons.check_circle : Icons.face,
+                    size: 100,
+                    color: widget.isCorrect ? Colors.green : Colors.orange,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    widget.isCorrect ? 'أحسنت!' : 'حاول مرة أخرى',
+                    style: TextStyle(
+                      fontSize: 32, fontWeight: FontWeight.bold,
+                      color: widget.isCorrect ? Colors.green : Colors.orange,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: widget.onDismiss,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: widget.isCorrect ? Colors.green : Colors.orange,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    ),
+                    child: const Text('متابعة', style: TextStyle(fontSize: 20)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -3009,6 +3091,7 @@ import '../domain/engines/choice_engine.dart';
 import '../domain/evaluation.dart';
 import '../../../core/animations/star_burst.dart';
 import '../../../core/widgets/kids_background.dart';
+import '../../../core/widgets/feedback_popup.dart';
 
 class ChoiceGameSetup<T> {
   const ChoiceGameSetup({
@@ -3050,6 +3133,10 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
   String? _wrongId;
   String? _okId;
   bool _locked = false;
+  
+  // حالة الرسائل
+  bool? _showFeedback;
+  bool _feedbackIsCorrect = false;
 
   @override
   void initState() {
@@ -3080,23 +3167,72 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
     
     switch (s.answer(choice)) {
       case Evaluation.correct:
-        setState(() { _okId = id; _locked = true; });
-        await Future.delayed(const Duration(milliseconds: 700));
+        setState(() { 
+          _okId = id; 
+          _locked = true; 
+          _showFeedback = true;
+          _feedbackIsCorrect = true;
+        });
+        ref.read(audioServiceProvider).playVoice('instructions/right', force: true);
+        
+        // نستنى شوية عشان الصوت والرسالة يظهروا
+        await Future.delayed(const Duration(milliseconds: 2000));
         if (!mounted) return;
+        
         s.next();
-        setState(() { _okId = null; _wrongId = null; _locked = false; });
-        s.finished ? _saveResult(s) : _playPrompt();
+        setState(() { 
+          _okId = null; 
+          _wrongId = null; 
+          _locked = false;
+          _showFeedback = null;
+        });
+        
+        if (s.finished) {
+          _saveResult(s);
+        } else {
+          _playPrompt();
+        }
+        
       case Evaluation.retry:
-        setState(() => _wrongId = id);
-        await Future.delayed(const Duration(milliseconds: 500));
-        if (mounted) setState(() => _wrongId = null);
+        setState(() { 
+          _wrongId = id;
+          _showFeedback = true;
+          _feedbackIsCorrect = false;
+        });
+        ref.read(audioServiceProvider).playVoice('instructions/try_again', force: true);
+        
+        await Future.delayed(const Duration(milliseconds: 1500));
+        if (mounted) {
+          setState(() { 
+            _wrongId = null;
+            _showFeedback = null;
+          });
+        }
+        
       case Evaluation.reveal:
-        setState(() { _wrongId = id; _okId = widget.idOf(s.current.target); });
-        await Future.delayed(const Duration(milliseconds: 1000));
+        setState(() { 
+          _wrongId = id; 
+          _okId = widget.idOf(s.current.target);
+          _showFeedback = true;
+          _feedbackIsCorrect = false;
+        });
+        ref.read(audioServiceProvider).playVoice('instructions/try_again', force: true);
+        
+        await Future.delayed(const Duration(milliseconds: 1500));
         if (!mounted) return;
+        
         s.next();
-        setState(() { _okId = null; _wrongId = null; });
-        s.finished ? _saveResult(s) : _playPrompt();
+        setState(() { 
+          _okId = null; 
+          _wrongId = null;
+          _showFeedback = null;
+        });
+        
+        if (s.finished) {
+          _saveResult(s);
+        } else {
+          _playPrompt();
+        }
     }
   }
 
@@ -3122,22 +3258,35 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
     final s = _session;
     return Scaffold(
       body: KidsBackground(
-        child: Column(
+        child: Stack(
           children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(iconSize: 36, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go(widget.backRoute)),
-              title: s == null ? null : Text('سؤال ${s.index + 1} من ${s.questions.length}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-              centerTitle: true,
+            Column(
+              children: [
+                AppBar(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  leading: IconButton(iconSize: 36, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go(widget.backRoute)),
+                  title: s == null ? null : Text('سؤال ${s.index + 1} من ${s.questions.length}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                  centerTitle: true,
+                ),
+                Expanded(
+                  child: s == null
+                      ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                      : s.finished
+                          ? _Result(stars: s.stars, onReplay: () { setState(() => _session = null); _init(); }, onBack: () => context.go(widget.backRoute))
+                          : _board(context, s),
+                ),
+              ],
             ),
-            Expanded(
-              child: s == null
-                  ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                  : s.finished
-                      ? _Result(stars: s.stars, onReplay: () { setState(() => _session = null); _init(); }, onBack: () => context.go(widget.backRoute))
-                      : _board(context, s),
-            ),
+            
+            // الرسالة المنبثقة
+            if (_showFeedback != null)
+              FeedbackPopup(
+                isCorrect: _feedbackIsCorrect,
+                onDismiss: () {
+                  setState(() => _showFeedback = null);
+                },
+              ),
           ],
         ),
       ),
@@ -3336,14 +3485,19 @@ class MatchImageGame extends StatelessWidget {
             promptBuilder: (ctx, q) {
               if (word == null) return const SizedBox.shrink();
               return Container(
-                width: 160, height: 160,
-                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)]),
-                child: ClipOval(
-                  child: Image.asset(
+                width: 180, height: 200,
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30), boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10)]),
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(child: Image.asset(
                     'assets/images/${word.image}.png',
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Center(child: Text(word.emoji, style: const TextStyle(fontSize: 80))),
-                  ),
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => Center(child: Text(word.emoji, style: const TextStyle(fontSize: 60))),
+                    )),
+                    Text(word.text, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                  ],
                 ),
               );
             },
@@ -3859,6 +4013,7 @@ class _LetterShadowGameState extends ConsumerState<LetterShadowGame> {
   Map<String, bool> _matched = {};
   bool _isLoading = true;
   bool _isFinished = false;
+  String? _draggedLetterId;
 
   @override
   void initState() {
@@ -3970,6 +4125,9 @@ class _LetterShadowGameState extends ConsumerState<LetterShadowGame> {
 
             return Draggable<Letter>(
               data: letter,
+              onDragStarted: () => setState(() => _draggedLetterId = letter.id),
+              onDragEnd: (_) => setState(() => _draggedLetterId = null),
+              onDraggableCanceled: (_, __) => setState(() => _draggedLetterId = null),
               feedback: Material(
                 color: Colors.transparent,
                 child: Container(
@@ -3978,7 +4136,7 @@ class _LetterShadowGameState extends ConsumerState<LetterShadowGame> {
                   child: Center(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white))),
                 ),
               ),
-              childWhenDragging: const SizedBox(width: 80, height: 80), // شيل الشكل خالص وهو بيتسحب
+              childWhenDragging: _draggedLetterId == letter.id ? const SizedBox(width: 80, height: 80) : null, // شيل الشكل خالص وهو بيتسحب
               child: Container(
                 width: 80, height: 80,
                 decoration: BoxDecoration(
@@ -4723,6 +4881,7 @@ class _ShapeShadowGameState extends ConsumerState<ShapeShadowGame> {
   List<ShapeItem> _options = [];
   Map<String, bool> _matched = {};
   bool _isFinished = false;
+  String? _draggedShapeId;
 
   @override
   void initState() {
@@ -4839,6 +4998,9 @@ class _ShapeShadowGameState extends ConsumerState<ShapeShadowGame> {
 
             return Draggable<ShapeItem>(
               data: shape,
+              onDragStarted: () => setState(() => _draggedShapeId = shape.id),
+              onDragEnd: (_) => setState(() => _draggedShapeId = null),
+              onDraggableCanceled: (_, __) => setState(() => _draggedShapeId = null),
               feedback: Material(
                 color: Colors.transparent,
                 child: SizedBox(
@@ -4846,7 +5008,7 @@ class _ShapeShadowGameState extends ConsumerState<ShapeShadowGame> {
                   child: CustomPaint(painter: ShapePainter(shape.type, Colors.blue.shade400)),
                 ),
               ),
-              childWhenDragging: const SizedBox(width: 80, height: 80),
+              childWhenDragging: _draggedShapeId == shape.id ? const SizedBox(width: 80, height: 80) : null,
               child: SizedBox(
                 width: 80, height: 80,
                 child: CustomPaint(painter: ShapePainter(shape.type, Colors.blue.shade400)),
@@ -4980,27 +5142,27 @@ class HomeScreen extends StatelessWidget {
                           spacing: 32,
                           runSpacing: 24,
                           children: [
-                            buildMenuButton('الحروف', 'أ', '/letters', const Color(0xFFFF7043)),
-                            buildMenuButton('الأرقام', '١', '/numbers', const Color(0xFF29B6F6)),
-                            buildMenuButton('الألوان', '🎨', '/colors', const Color(0xFF9C27B0)),
-                            buildMenuButton('الأشكال', '🔺', '/shapes', const Color(0xFF4CAF50)),
-                            buildMenuButton('التلوين', '🖍️', '/coloring', const Color(0xFFFF9800)),
-                            buildMenuButton('المهن', '👷', '/professions', const Color(0xFF607D8B)),
+                            Floating(child: buildMenuButton('الحروف', 'أ', '/letters', const Color(0xFFFF7043))),
+                            Floating(child: buildMenuButton('الأرقام', '١', '/numbers', const Color(0xFF29B6F6))),
+                            Floating(child: buildMenuButton('الألوان', '🎨', '/colors', const Color(0xFF9C27B0))),
+                            Floating(child: buildMenuButton('الأشكال', '🔺', '/shapes', const Color(0xFF4CAF50))),
+                            Floating(child: buildMenuButton('التلوين', '🖍️', '/coloring', const Color(0xFFFF9800))),
+                            Floating(child: buildMenuButton('المهن', '👷', '/professions', const Color(0xFF607D8B))),
                           ],
                         )
                       else
                         Column(
                           children: [
-                            buildMenuButton('الحروف', 'أ', '/letters', const Color(0xFFFF7043)),
+                            Floating(child: buildMenuButton('الحروف', 'أ', '/letters', const Color(0xFFFF7043))),
                             const SizedBox(height: 24),
-                            buildMenuButton('الأرقام', '١', '/numbers', const Color(0xFF29B6F6)),
+                            Floating(child: buildMenuButton('الأرقام', '١', '/numbers', const Color(0xFF29B6F6))),
                             const SizedBox(height: 24),
-                            buildMenuButton('الألوان', '🎨', '/colors', const Color(0xFF9C27B0)),
+                            Floating(child: buildMenuButton('الألوان', '🎨', '/colors', const Color(0xFF9C27B0))),
                             const SizedBox(height: 24),
-                            buildMenuButton('الأشكال', '🔺', '/shapes', const Color(0xFF4CAF50)),
+                            Floating(child: buildMenuButton('الأشكال', '🔺', '/shapes', const Color(0xFF4CAF50))),
                             const SizedBox(height: 24),
-                            buildMenuButton('التلوين', '🖍️', '/coloring', const Color(0xFFFF9800)),
-                            buildMenuButton('المهن', '👷', '/professions', const Color(0xFF607D8B)),
+                            Floating(child: buildMenuButton('التلوين', '🖍️', '/coloring', const Color(0xFFFF9800))),
+                            Floating(child: buildMenuButton('المهن', '👷', '/professions', const Color(0xFF607D8B))),
                           ],
                         ),
                     ],
@@ -5291,8 +5453,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../providers/content_providers.dart';
 import '../../../providers/progress_providers.dart';
-import '../../../providers/audio_providers.dart';
-import '../../../core/animations/floating.dart';
 import '../../../core/widgets/kids_background.dart';
 import '../../../core/widgets/kids_button.dart';
 
@@ -5301,10 +5461,6 @@ class LettersScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // تشغيل الصوت الترحيبي أول مرة
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(audioServiceProvider).playVoice('instructions/letters');
-    });
     final repo = ref.watch(contentRepositoryProvider);
     final stars = ref.watch(starsProvider).valueOrNull ?? const {};
 
@@ -5318,14 +5474,6 @@ class LettersScreen extends ConsumerWidget {
               leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
               title: const Text('الحروف', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
               centerTitle: true,
-              actions: [
-                IconButton(
-                  iconSize: 40,
-                  icon: const Icon(Icons.extension, color: Colors.amber),
-                  tooltip: 'لعبة تطابق الحروف',
-                  onPressed: () => context.push('/letters/shadow_game'),
-                ),
-              ],
             ),
             Expanded(
               child: repo.when(
@@ -5347,23 +5495,47 @@ class LettersScreen extends ConsumerWidget {
                       itemBuilder: (context, i) {
                         final l = r.letters[i];
                         final earnedStars = stars[l.id] ?? 0;
+                        
+                        // شرط القفل: أول حرف مفتوح، والباقي بيتفتح لو الحرف اللي قبله متعلم (3 نجوم)
+                        bool isUnlocked = i == 0;
+                        if (i > 0) {
+                          final prevLetter = r.letters[i - 1];
+                          final prevStars = stars[prevLetter.id] ?? 0;
+                          if (prevStars >= 1) { // ممكن نغير الرقم لـ 3 لو عايزه أصعب
+                            isUnlocked = true;
+                          }
+                        }
+                        
                         return Stack(
                           children: [
                             Positioned.fill(
-                              child: Floating(
-                                child: KidsButton(
-                                color: Colors.white,
-                                onTap: () => context.push('/letters/${l.id}'),
+                              child: KidsButton(
+                                color: isUnlocked ? Colors.white : Colors.grey.shade300,
+                                onTap: isUnlocked ? () => context.push('/letters/${l.id}') : () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('أكمل الحرف السابق أولاً!'), duration: Duration(seconds: 1)),
+                                  );
+                                },
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Padding(
                                     padding: const EdgeInsets.all(8.0),
-                                    child: Text(l.character, style: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                                    child: Text(
+                                      l.character, 
+                                      style: TextStyle(
+                                        fontSize: 60, 
+                                        fontWeight: FontWeight.bold, 
+                                        color: isUnlocked ? const Color(0xFF00796B) : Colors.grey,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
-                              ),
                             ),
+                            if (!isUnlocked)
+                              const Positioned.fill(
+                                child: Center(child: Icon(Icons.lock, size: 40, color: Colors.grey)),
+                              ),
                             if (earnedStars > 0)
                               const PositionedDirectional(top: 4, end: 4, child: Icon(Icons.star, color: Colors.amber, size: 28)),
                           ],

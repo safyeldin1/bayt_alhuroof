@@ -21,6 +21,7 @@ class _LetterShadowGameState extends ConsumerState<LetterShadowGame> {
   Map<String, bool> _matched = {};
   bool _isLoading = true;
   bool _isFinished = false;
+  String? _draggedLetterId;
 
   @override
   void initState() {
@@ -132,6 +133,9 @@ class _LetterShadowGameState extends ConsumerState<LetterShadowGame> {
 
             return Draggable<Letter>(
               data: letter,
+              onDragStarted: () => setState(() => _draggedLetterId = letter.id),
+              onDragEnd: (_) => setState(() => _draggedLetterId = null),
+              onDraggableCanceled: (_, __) => setState(() => _draggedLetterId = null),
               feedback: Material(
                 color: Colors.transparent,
                 child: Container(
@@ -140,7 +144,7 @@ class _LetterShadowGameState extends ConsumerState<LetterShadowGame> {
                   child: Center(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white))),
                 ),
               ),
-              childWhenDragging: const SizedBox(width: 80, height: 80), // شيل الشكل خالص وهو بيتسحب
+              childWhenDragging: _draggedLetterId == letter.id ? const SizedBox(width: 80, height: 80) : null, // شيل الشكل خالص وهو بيتسحب
               child: Container(
                 width: 80, height: 80,
                 decoration: BoxDecoration(

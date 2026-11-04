@@ -7,6 +7,7 @@ import '../domain/engines/choice_engine.dart';
 import '../domain/evaluation.dart';
 import '../../../core/animations/star_burst.dart';
 import '../../../core/widgets/kids_background.dart';
+import '../../../core/widgets/feedback_popup.dart';
 
 class ChoiceGameSetup<T> {
   const ChoiceGameSetup({
@@ -48,6 +49,10 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
   String? _wrongId;
   String? _okId;
   bool _locked = false;
+  
+  // حالة الرسائل
+  bool? _showFeedback;
+  bool _feedbackIsCorrect = false;
 
   @override
   void initState() {
@@ -78,23 +83,72 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
     
     switch (s.answer(choice)) {
       case Evaluation.correct:
-        setState(() { _okId = id; _locked = true; });
-        await Future.delayed(const Duration(milliseconds: 700));
+        setState(() { 
+          _okId = id; 
+          _locked = true; 
+          _showFeedback = true;
+          _feedbackIsCorrect = true;
+        });
+        ref.read(audioServiceProvider).playVoice('instructions/right', force: true);
+        
+        // نستنى شوية عشان الصوت والرسالة يظهروا
+        await Future.delayed(const Duration(milliseconds: 2000));
         if (!mounted) return;
+        
         s.next();
-        setState(() { _okId = null; _wrongId = null; _locked = false; });
-        s.finished ? _saveResult(s) : _playPrompt();
+        setState(() { 
+          _okId = null; 
+          _wrongId = null; 
+          _locked = false;
+          _showFeedback = null;
+        });
+        
+        if (s.finished) {
+          _saveResult(s);
+        } else {
+          _playPrompt();
+        }
+        
       case Evaluation.retry:
-        setState(() => _wrongId = id);
-        await Future.delayed(const Duration(milliseconds: 500));
-        if (mounted) setState(() => _wrongId = null);
+        setState(() { 
+          _wrongId = id;
+          _showFeedback = true;
+          _feedbackIsCorrect = false;
+        });
+        ref.read(audioServiceProvider).playVoice('instructions/try_again', force: true);
+        
+        await Future.delayed(const Duration(milliseconds: 1500));
+        if (mounted) {
+          setState(() { 
+            _wrongId = null;
+            _showFeedback = null;
+          });
+        }
+        
       case Evaluation.reveal:
-        setState(() { _wrongId = id; _okId = widget.idOf(s.current.target); });
-        await Future.delayed(const Duration(milliseconds: 1000));
+        setState(() { 
+          _wrongId = id; 
+          _okId = widget.idOf(s.current.target);
+          _showFeedback = true;
+          _feedbackIsCorrect = false;
+        });
+        ref.read(audioServiceProvider).playVoice('instructions/try_again', force: true);
+        
+        await Future.delayed(const Duration(milliseconds: 1500));
         if (!mounted) return;
+        
         s.next();
-        setState(() { _okId = null; _wrongId = null; });
-        s.finished ? _saveResult(s) : _playPrompt();
+        setState(() { 
+          _okId = null; 
+          _wrongId = null;
+          _showFeedback = null;
+        });
+        
+        if (s.finished) {
+          _saveResult(s);
+        } else {
+          _playPrompt();
+        }
     }
   }
 
@@ -120,22 +174,35 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
     final s = _session;
     return Scaffold(
       body: KidsBackground(
-        child: Column(
+        child: Stack(
           children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(iconSize: 36, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go(widget.backRoute)),
-              title: s == null ? null : Text('سؤال ${s.index + 1} من ${s.questions.length}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-              centerTitle: true,
+            Column(
+              children: [
+                AppBar(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  leading: IconButton(iconSize: 36, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go(widget.backRoute)),
+                  title: s == null ? null : Text('سؤال ${s.index + 1} من ${s.questions.length}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                  centerTitle: true,
+                ),
+                Expanded(
+                  child: s == null
+                      ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                      : s.finished
+                          ? _Result(stars: s.stars, onReplay: () { setState(() => _session = null); _init(); }, onBack: () => context.go(widget.backRoute))
+                          : _board(context, s),
+                ),
+              ],
             ),
-            Expanded(
-              child: s == null
-                  ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                  : s.finished
-                      ? _Result(stars: s.stars, onReplay: () { setState(() => _session = null); _init(); }, onBack: () => context.go(widget.backRoute))
-                      : _board(context, s),
-            ),
+            
+            // الرسالة المنبثقة
+            if (_showFeedback != null)
+              FeedbackPopup(
+                isCorrect: _feedbackIsCorrect,
+                onDismiss: () {
+                  setState(() => _showFeedback = null);
+                },
+              ),
           ],
         ),
       ),
