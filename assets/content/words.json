@@ -2,12 +2,256 @@
   "schema": 1,
   "items": [
     {
-      "id": "word_asad", "text": "أسد", "textVowelled": "أَسَد",
-      "startsWithLetterId": "letter_alf", "image": "words/asad", "audio": "words/asad"
+      "id": "word_asad",
+      "text": "أسد",
+      "textVowelled": "أَسَد",
+      "startsWithLetterId": "letter_alf",
+      "image": "words/asad",
+      "audio": "words/asad",
+      "emoji": "🦁"
     },
     {
-      "id": "word_batta", "text": "بطة", "textVowelled": "بَطَّة",
-      "startsWithLetterId": "letter_ba", "image": "words/batta", "audio": "words/batta"
+      "id": "word_batta",
+      "text": "بطة",
+      "textVowelled": "بَطَّة",
+      "startsWithLetterId": "letter_ba",
+      "image": "words/batta",
+      "audio": "words/batta",
+      "emoji": "🦆"
+    },
+    {
+      "id": "word_toffaha",
+      "text": "تفاحة",
+      "textVowelled": "تُفَّاحَة",
+      "startsWithLetterId": "letter_ta",
+      "image": "words/toffaha",
+      "audio": "words/toffaha",
+      "emoji": "🍎"
+    },
+    {
+      "id": "word_tha3lab",
+      "text": "ثعلب",
+      "textVowelled": "ثَعْلَب",
+      "startsWithLetterId": "letter_tha",
+      "image": "words/tha3lab",
+      "audio": "words/tha3lab",
+      "emoji": "🦊"
+    },
+    {
+      "id": "word_jamal",
+      "text": "جمل",
+      "textVowelled": "جَمَل",
+      "startsWithLetterId": "letter_jeem",
+      "image": "words/jamal",
+      "audio": "words/jamal",
+      "emoji": "🐪"
+    },
+    {
+      "id": "word_hisan",
+      "text": "حصان",
+      "textVowelled": "حِصَان",
+      "startsWithLetterId": "letter_haa",
+      "image": "words/hisan",
+      "audio": "words/hisan",
+      "emoji": "🐴"
+    },
+    {
+      "id": "word_kharoof",
+      "text": "خروف",
+      "textVowelled": "خَرُوف",
+      "startsWithLetterId": "letter_kha",
+      "image": "words/kharoof",
+      "audio": "words/kharoof",
+      "emoji": "🐑"
+    },
+    {
+      "id": "word_dob",
+      "text": "دب",
+      "textVowelled": "دُبّ",
+      "startsWithLetterId": "letter_dal",
+      "image": "words/dob",
+      "audio": "words/dob",
+      "emoji": "🐻"
+    },
+    {
+      "id": "word_the2b",
+      "text": "ذئب",
+      "textVowelled": "ذِئْب",
+      "startsWithLetterId": "letter_thal",
+      "image": "words/the2b",
+      "audio": "words/the2b",
+      "emoji": "🐺"
+    },
+    {
+      "id": "word_reesha",
+      "text": "ريشة",
+      "textVowelled": "رِيشَة",
+      "startsWithLetterId": "letter_ra",
+      "image": "words/reesha",
+      "audio": "words/reesha",
+      "emoji": "🪶"
+    },
+    {
+      "id": "word_zarafa",
+      "text": "زرافة",
+      "textVowelled": "زَرَافَة",
+      "startsWithLetterId": "letter_zay",
+      "image": "words/zarafa",
+      "audio": "words/zarafa",
+      "emoji": "🦒"
+    },
+    {
+      "id": "word_samaka",
+      "text": "سمكة",
+      "textVowelled": "سَمَكَة",
+      "startsWithLetterId": "letter_seen",
+      "image": "words/samaka",
+      "audio": "words/samaka",
+      "emoji": "🐟"
+    },
+    {
+      "id": "word_shams",
+      "text": "شمس",
+      "textVowelled": "شَمْس",
+      "startsWithLetterId": "letter_sheen",
+      "image": "words/shams",
+      "audio": "words/shams",
+      "emoji": "☀️"
+    },
+    {
+      "id": "word_saqr",
+      "text": "صقر",
+      "textVowelled": "صَقْر",
+      "startsWithLetterId": "letter_sad",
+      "image": "words/saqr",
+      "audio": "words/saqr",
+      "emoji": "🦅"
+    },
+    {
+      "id": "word_dofda3",
+      "text": "ضفدع",
+      "textVowelled": "ضِفْدَع",
+      "startsWithLetterId": "letter_dad",
+      "image": "words/dofda3",
+      "audio": "words/dofda3",
+      "emoji": "🐸"
+    },
+    {
+      "id": "word_tayara",
+      "text": "طائرة",
+      "textVowelled": "طَائِرَة",
+      "startsWithLetterId": "letter_taa",
+      "image": "words/tayara",
+      "audio": "words/tayara",
+      "emoji": "✈️"
+    },
+    {
+      "id": "word_zarf",
+      "text": "ظرف",
+      "textVowelled": "ظَرْف",
+      "startsWithLetterId": "letter_zaa",
+      "image": "words/zarf",
+      "audio": "words/zarf",
+      "emoji": "✉️"
+    },
+    {
+      "id": "word_3inab",
+      "text": "عنب",
+      "textVowelled": "عِنَب",
+      "startsWithLetterId": "letter_ain",
+      "image": "words/3inab",
+      "audio": "words/3inab",
+      "emoji": "🍇"
+    },
+    {
+      "id": "word_ghazala",
+      "text": "غزالة",
+      "textVowelled": "غَزَالَة",
+      "startsWithLetterId": "letter_ghain",
+      "image": "words/ghazala",
+      "audio": "words/ghazala",
+      "emoji": "🦌"
+    },
+    {
+      "id": "word_feel",
+      "text": "فيل",
+      "textVowelled": "فِيل",
+      "startsWithLetterId": "letter_fa",
+      "image": "words/feel",
+      "audio": "words/feel",
+      "emoji": "🐘"
+    },
+    {
+      "id": "word_qamar",
+      "text": "قمر",
+      "textVowelled": "قَمَر",
+      "startsWithLetterId": "letter_qaf",
+      "image": "words/qamar",
+      "audio": "words/qamar",
+      "emoji": "🌙"
+    },
+    {
+      "id": "word_kitab",
+      "text": "كتاب",
+      "textVowelled": "كِتَاب",
+      "startsWithLetterId": "letter_kaf",
+      "image": "words/kitab",
+      "audio": "words/kitab",
+      "emoji": "📖"
+    },
+    {
+      "id": "word_laymoon",
+      "text": "ليمون",
+      "textVowelled": "لَيْمُون",
+      "startsWithLetterId": "letter_lam",
+      "image": "words/laymoon",
+      "audio": "words/laymoon",
+      "emoji": "🍋"
+    },
+    {
+      "id": "word_mawz",
+      "text": "موز",
+      "textVowelled": "مَوْز",
+      "startsWithLetterId": "letter_meem",
+      "image": "words/mawz",
+      "audio": "words/mawz",
+      "emoji": "🍌"
+    },
+    {
+      "id": "word_nahla",
+      "text": "نحلة",
+      "textVowelled": "نَحْلَة",
+      "startsWithLetterId": "letter_noon",
+      "image": "words/nahla",
+      "audio": "words/nahla",
+      "emoji": "🐝"
+    },
+    {
+      "id": "word_hudhud",
+      "text": "هدهد",
+      "textVowelled": "هُدْهُد",
+      "startsWithLetterId": "letter_ha",
+      "image": "words/hudhud",
+      "audio": "words/hudhud",
+      "emoji": "🐦"
+    },
+    {
+      "id": "word_warda",
+      "text": "وردة",
+      "textVowelled": "وَرْدَة",
+      "startsWithLetterId": "letter_waw",
+      "image": "words/warda",
+      "audio": "words/warda",
+      "emoji": "🌹"
+    },
+    {
+      "id": "word_yad",
+      "text": "يد",
+      "textVowelled": "يَد",
+      "startsWithLetterId": "letter_ya",
+      "image": "words/yad",
+      "audio": "words/yad",
+      "emoji": "✋"
     }
   ]
 }

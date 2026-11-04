@@ -7,8 +7,8 @@ class ParentGateChallenge {
 
   factory ParentGateChallenge.generate([Random? rng]) {
     final r = rng ?? Random();
-    final a = r.nextInt(6) + 4; // 4 to 9
-    final b = r.nextInt(6) + 4; // 4 to 9
+    final a = r.nextInt(6) + 4;
+    final b = r.nextInt(6) + 4;
     final answer = a * b;
     final options = <int>{answer, answer + 2, answer - 3, answer + 5}.toList()..shuffle(r);
     return ParentGateChallenge(a: a, b: b, answer: answer, options: options);

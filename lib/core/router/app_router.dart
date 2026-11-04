@@ -27,6 +27,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (c, s) => RecognizeLetterGame(letterId: s.pathParameters['id']!),
       ),
       GoRoute(
+        path: '/letters/:id/match',
+        builder: (c, s) => MatchImageGame(letterId: s.pathParameters['id']!),
+      ),
+      GoRoute(
         path: '/letters/:id/trace',
         builder: (c, s) => TracingScreen(letterId: s.pathParameters['id']!),
       ),

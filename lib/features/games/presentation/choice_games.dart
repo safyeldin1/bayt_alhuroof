@@ -29,10 +29,7 @@ class RecognizeLetterGame extends StatelessWidget {
             ),
           );
         },
-        optionBuilder: (c, ref, l) => Text(
-          l.character,
-          style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold),
-        ),
+        optionBuilder: (c, ref, l) => Text(l.character, style: const TextStyle(fontSize: 56, fontWeight: FontWeight.bold)),
       );
 }
 
@@ -72,6 +69,51 @@ class PickNumberGame extends StatelessWidget {
             ),
           );
         },
-        optionBuilder: (c, ref, n) => Text(_formatNumber(n.value), style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold)),
+        optionBuilder: (c, ref, n) => Text(_formatNumber(n.value), style: const TextStyle(fontSize: 56, fontWeight: FontWeight.bold)),
+      );
+}
+
+// لعبة جديدة: مطابقة الصورة بالحرف
+class MatchImageGame extends StatelessWidget {
+  const MatchImageGame({super.key, required this.letterId});
+  final String letterId;
+
+  @override
+  Widget build(BuildContext context) => ChoiceGameScreen<Letter>(
+        activityId: 'match_image_$letterId',
+        contentId: letterId,
+        kind: 'letter',
+        backRoute: '/letters/$letterId',
+        idOf: (l) => l.id,
+        setup: (ref) async {
+          final repo = await ref.read(contentRepositoryProvider.future);
+          final target = repo.letterById(letterId);
+          if (target == null) return const ChoiceGameSetup(questions: []);
+          
+          final word = repo.wordById(target.primaryWordId);
+          
+          return ChoiceGameSetup(
+            instructionText: 'ما هو الحرف الذي تبدأ به هذه الصورة؟',
+            promptBuilder: (ctx, q) {
+              if (word == null) return const SizedBox.shrink();
+              return Container(
+                width: 160, height: 160,
+                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)]),
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/images/${word.image}.png',
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Center(child: Text(word.emoji, style: const TextStyle(fontSize: 80))),
+                  ),
+                ),
+              );
+            },
+            questions: ChoiceEngine<Letter>((l) => l.id).build(
+              targets: [target],
+              pool: repo.letters,
+            ),
+          );
+        },
+        optionBuilder: (c, ref, l) => Text(l.character, style: const TextStyle(fontSize: 56, fontWeight: FontWeight.bold)),
       );
 }

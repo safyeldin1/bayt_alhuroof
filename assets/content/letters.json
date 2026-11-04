@@ -2,16 +2,536 @@
   "schema": 1,
   "items": [
     {
-      "id": "letter_alf", "order": 1, "character": "أ", "name": "أَلِف",
-      "forms": { "isolated": "أ", "initial": "أ", "medial": "ـأ", "final": "ـأ" },
-      "audio": { "name": "letters/alf_name", "sound": "letters/alf_sound" },
-      "primaryWordId": "word_asad", "tracingId": "trace_letter_alf", "status": "published"
+      "id": "letter_alf",
+      "order": 1,
+      "character": "أ",
+      "name": "أَلِف",
+      "forms": {
+        "isolated": "أ",
+        "initial": "أ",
+        "medial": "ـأ",
+        "final": "ـأ"
+      },
+      "audio": {
+        "name": "letters/alf_name",
+        "sound": "letters/alf_sound"
+      },
+      "primaryWordId": "word_asad",
+      "tracingId": "trace_letter_alf",
+      "status": "published"
     },
     {
-      "id": "letter_ba", "order": 2, "character": "ب", "name": "بَاء",
-      "forms": { "isolated": "ب", "initial": "بـ", "medial": "ـبـ", "final": "ـب" },
-      "audio": { "name": "letters/ba_name", "sound": "letters/ba_sound" },
-      "primaryWordId": "word_batta", "tracingId": "trace_letter_ba", "status": "published"
+      "id": "letter_ba",
+      "order": 2,
+      "character": "ب",
+      "name": "بَاء",
+      "forms": {
+        "isolated": "ب",
+        "initial": "بـ",
+        "medial": "ـبـ",
+        "final": "ـب"
+      },
+      "audio": {
+        "name": "letters/ba_name",
+        "sound": "letters/ba_sound"
+      },
+      "primaryWordId": "word_batta",
+      "tracingId": "trace_letter_ba",
+      "status": "published"
+    },
+    {
+      "id": "letter_ta",
+      "order": 3,
+      "character": "ت",
+      "name": "تَاء",
+      "forms": {
+        "isolated": "ت",
+        "initial": "تـ",
+        "medial": "ـتـ",
+        "final": "ـت"
+      },
+      "audio": {
+        "name": "letters/ta_name",
+        "sound": "letters/ta_sound"
+      },
+      "primaryWordId": "word_toffaha",
+      "tracingId": "trace_letter_ta",
+      "status": "published"
+    },
+    {
+      "id": "letter_tha",
+      "order": 4,
+      "character": "ث",
+      "name": "ثَاء",
+      "forms": {
+        "isolated": "ث",
+        "initial": "ثـ",
+        "medial": "ـثـ",
+        "final": "ـث"
+      },
+      "audio": {
+        "name": "letters/tha_name",
+        "sound": "letters/tha_sound"
+      },
+      "primaryWordId": "word_tha3lab",
+      "tracingId": "trace_letter_tha",
+      "status": "published"
+    },
+    {
+      "id": "letter_jeem",
+      "order": 5,
+      "character": "ج",
+      "name": "جِيم",
+      "forms": {
+        "isolated": "ج",
+        "initial": "جـ",
+        "medial": "ـجـ",
+        "final": "ـج"
+      },
+      "audio": {
+        "name": "letters/jeem_name",
+        "sound": "letters/jeem_sound"
+      },
+      "primaryWordId": "word_jamal",
+      "tracingId": "trace_letter_jeem",
+      "status": "published"
+    },
+    {
+      "id": "letter_haa",
+      "order": 6,
+      "character": "ح",
+      "name": "حَاء",
+      "forms": {
+        "isolated": "ح",
+        "initial": "حـ",
+        "medial": "ـحـ",
+        "final": "ـح"
+      },
+      "audio": {
+        "name": "letters/haa_name",
+        "sound": "letters/haa_sound"
+      },
+      "primaryWordId": "word_hisan",
+      "tracingId": "trace_letter_haa",
+      "status": "published"
+    },
+    {
+      "id": "letter_kha",
+      "order": 7,
+      "character": "خ",
+      "name": "خَاء",
+      "forms": {
+        "isolated": "خ",
+        "initial": "خـ",
+        "medial": "ـخـ",
+        "final": "ـخ"
+      },
+      "audio": {
+        "name": "letters/kha_name",
+        "sound": "letters/kha_sound"
+      },
+      "primaryWordId": "word_kharoof",
+      "tracingId": "trace_letter_kha",
+      "status": "published"
+    },
+    {
+      "id": "letter_dal",
+      "order": 8,
+      "character": "د",
+      "name": "دَال",
+      "forms": {
+        "isolated": "د",
+        "initial": "د",
+        "medial": "ـد",
+        "final": "ـد"
+      },
+      "audio": {
+        "name": "letters/dal_name",
+        "sound": "letters/dal_sound"
+      },
+      "primaryWordId": "word_dob",
+      "tracingId": "trace_letter_dal",
+      "status": "published"
+    },
+    {
+      "id": "letter_thal",
+      "order": 9,
+      "character": "ذ",
+      "name": "ذَال",
+      "forms": {
+        "isolated": "ذ",
+        "initial": "ذ",
+        "medial": "ـذ",
+        "final": "ـذ"
+      },
+      "audio": {
+        "name": "letters/thal_name",
+        "sound": "letters/thal_sound"
+      },
+      "primaryWordId": "word_the2b",
+      "tracingId": "trace_letter_thal",
+      "status": "published"
+    },
+    {
+      "id": "letter_ra",
+      "order": 10,
+      "character": "ر",
+      "name": "رَاء",
+      "forms": {
+        "isolated": "ر",
+        "initial": "ر",
+        "medial": "ـر",
+        "final": "ـر"
+      },
+      "audio": {
+        "name": "letters/ra_name",
+        "sound": "letters/ra_sound"
+      },
+      "primaryWordId": "word_reesha",
+      "tracingId": "trace_letter_ra",
+      "status": "published"
+    },
+    {
+      "id": "letter_zay",
+      "order": 11,
+      "character": "ز",
+      "name": "زَاي",
+      "forms": {
+        "isolated": "ز",
+        "initial": "ز",
+        "medial": "ـز",
+        "final": "ـز"
+      },
+      "audio": {
+        "name": "letters/zay_name",
+        "sound": "letters/zay_sound"
+      },
+      "primaryWordId": "word_zarafa",
+      "tracingId": "trace_letter_zay",
+      "status": "published"
+    },
+    {
+      "id": "letter_seen",
+      "order": 12,
+      "character": "س",
+      "name": "سِين",
+      "forms": {
+        "isolated": "س",
+        "initial": "سـ",
+        "medial": "ـسـ",
+        "final": "ـس"
+      },
+      "audio": {
+        "name": "letters/seen_name",
+        "sound": "letters/seen_sound"
+      },
+      "primaryWordId": "word_samaka",
+      "tracingId": "trace_letter_seen",
+      "status": "published"
+    },
+    {
+      "id": "letter_sheen",
+      "order": 13,
+      "character": "ش",
+      "name": "شِين",
+      "forms": {
+        "isolated": "ش",
+        "initial": "شـ",
+        "medial": "ـشـ",
+        "final": "ـش"
+      },
+      "audio": {
+        "name": "letters/sheen_name",
+        "sound": "letters/sheen_sound"
+      },
+      "primaryWordId": "word_shams",
+      "tracingId": "trace_letter_sheen",
+      "status": "published"
+    },
+    {
+      "id": "letter_sad",
+      "order": 14,
+      "character": "ص",
+      "name": "صَاد",
+      "forms": {
+        "isolated": "ص",
+        "initial": "صـ",
+        "medial": "ـصـ",
+        "final": "ـص"
+      },
+      "audio": {
+        "name": "letters/sad_name",
+        "sound": "letters/sad_sound"
+      },
+      "primaryWordId": "word_saqr",
+      "tracingId": "trace_letter_sad",
+      "status": "published"
+    },
+    {
+      "id": "letter_dad",
+      "order": 15,
+      "character": "ض",
+      "name": "ضَاد",
+      "forms": {
+        "isolated": "ض",
+        "initial": "ضـ",
+        "medial": "ـضـ",
+        "final": "ـض"
+      },
+      "audio": {
+        "name": "letters/dad_name",
+        "sound": "letters/dad_sound"
+      },
+      "primaryWordId": "word_dofda3",
+      "tracingId": "trace_letter_dad",
+      "status": "published"
+    },
+    {
+      "id": "letter_taa",
+      "order": 16,
+      "character": "ط",
+      "name": "طَاء",
+      "forms": {
+        "isolated": "ط",
+        "initial": "طـ",
+        "medial": "ـطـ",
+        "final": "ـط"
+      },
+      "audio": {
+        "name": "letters/taa_name",
+        "sound": "letters/taa_sound"
+      },
+      "primaryWordId": "word_tayara",
+      "tracingId": "trace_letter_taa",
+      "status": "published"
+    },
+    {
+      "id": "letter_zaa",
+      "order": 17,
+      "character": "ظ",
+      "name": "ظَاء",
+      "forms": {
+        "isolated": "ظ",
+        "initial": "ظـ",
+        "medial": "ـظـ",
+        "final": "ـظ"
+      },
+      "audio": {
+        "name": "letters/zaa_name",
+        "sound": "letters/zaa_sound"
+      },
+      "primaryWordId": "word_zarf",
+      "tracingId": "trace_letter_zaa",
+      "status": "published"
+    },
+    {
+      "id": "letter_ain",
+      "order": 18,
+      "character": "ع",
+      "name": "عَين",
+      "forms": {
+        "isolated": "ع",
+        "initial": "عـ",
+        "medial": "ـعـ",
+        "final": "ـع"
+      },
+      "audio": {
+        "name": "letters/ain_name",
+        "sound": "letters/ain_sound"
+      },
+      "primaryWordId": "word_3inab",
+      "tracingId": "trace_letter_ain",
+      "status": "published"
+    },
+    {
+      "id": "letter_ghain",
+      "order": 19,
+      "character": "غ",
+      "name": "غَين",
+      "forms": {
+        "isolated": "غ",
+        "initial": "غـ",
+        "medial": "ـغـ",
+        "final": "ـغ"
+      },
+      "audio": {
+        "name": "letters/ghain_name",
+        "sound": "letters/ghain_sound"
+      },
+      "primaryWordId": "word_ghazala",
+      "tracingId": "trace_letter_ghain",
+      "status": "published"
+    },
+    {
+      "id": "letter_fa",
+      "order": 20,
+      "character": "ف",
+      "name": "فَاء",
+      "forms": {
+        "isolated": "ف",
+        "initial": "فـ",
+        "medial": "ـفـ",
+        "final": "ـف"
+      },
+      "audio": {
+        "name": "letters/fa_name",
+        "sound": "letters/fa_sound"
+      },
+      "primaryWordId": "word_feel",
+      "tracingId": "trace_letter_fa",
+      "status": "published"
+    },
+    {
+      "id": "letter_qaf",
+      "order": 21,
+      "character": "ق",
+      "name": "قَاف",
+      "forms": {
+        "isolated": "ق",
+        "initial": "قـ",
+        "medial": "ـقـ",
+        "final": "ـق"
+      },
+      "audio": {
+        "name": "letters/qaf_name",
+        "sound": "letters/qaf_sound"
+      },
+      "primaryWordId": "word_qamar",
+      "tracingId": "trace_letter_qaf",
+      "status": "published"
+    },
+    {
+      "id": "letter_kaf",
+      "order": 22,
+      "character": "ك",
+      "name": "كَاف",
+      "forms": {
+        "isolated": "ك",
+        "initial": "كـ",
+        "medial": "ـكـ",
+        "final": "ـك"
+      },
+      "audio": {
+        "name": "letters/kaf_name",
+        "sound": "letters/kaf_sound"
+      },
+      "primaryWordId": "word_kitab",
+      "tracingId": "trace_letter_kaf",
+      "status": "published"
+    },
+    {
+      "id": "letter_lam",
+      "order": 23,
+      "character": "ل",
+      "name": "لَام",
+      "forms": {
+        "isolated": "ل",
+        "initial": "لـ",
+        "medial": "ـلـ",
+        "final": "ـل"
+      },
+      "audio": {
+        "name": "letters/lam_name",
+        "sound": "letters/lam_sound"
+      },
+      "primaryWordId": "word_laymoon",
+      "tracingId": "trace_letter_lam",
+      "status": "published"
+    },
+    {
+      "id": "letter_meem",
+      "order": 24,
+      "character": "م",
+      "name": "مِيم",
+      "forms": {
+        "isolated": "م",
+        "initial": "مـ",
+        "medial": "ـمـ",
+        "final": "ـم"
+      },
+      "audio": {
+        "name": "letters/meem_name",
+        "sound": "letters/meem_sound"
+      },
+      "primaryWordId": "word_mawz",
+      "tracingId": "trace_letter_meem",
+      "status": "published"
+    },
+    {
+      "id": "letter_noon",
+      "order": 25,
+      "character": "ن",
+      "name": "نُون",
+      "forms": {
+        "isolated": "ن",
+        "initial": "نـ",
+        "medial": "ـنـ",
+        "final": "ـن"
+      },
+      "audio": {
+        "name": "letters/noon_name",
+        "sound": "letters/noon_sound"
+      },
+      "primaryWordId": "word_nahla",
+      "tracingId": "trace_letter_noon",
+      "status": "published"
+    },
+    {
+      "id": "letter_ha",
+      "order": 26,
+      "character": "ه",
+      "name": "هَاء",
+      "forms": {
+        "isolated": "ه",
+        "initial": "هـ",
+        "medial": "ـهـ",
+        "final": "ـه"
+      },
+      "audio": {
+        "name": "letters/ha_name",
+        "sound": "letters/ha_sound"
+      },
+      "primaryWordId": "word_hudhud",
+      "tracingId": "trace_letter_ha",
+      "status": "published"
+    },
+    {
+      "id": "letter_waw",
+      "order": 27,
+      "character": "و",
+      "name": "وَاو",
+      "forms": {
+        "isolated": "و",
+        "initial": "و",
+        "medial": "ـو",
+        "final": "ـو"
+      },
+      "audio": {
+        "name": "letters/waw_name",
+        "sound": "letters/waw_sound"
+      },
+      "primaryWordId": "word_warda",
+      "tracingId": "trace_letter_waw",
+      "status": "published"
+    },
+    {
+      "id": "letter_ya",
+      "order": 28,
+      "character": "ي",
+      "name": "يَاء",
+      "forms": {
+        "isolated": "ي",
+        "initial": "يـ",
+        "medial": "ـيـ",
+        "final": "ـي"
+      },
+      "audio": {
+        "name": "letters/ya_name",
+        "sound": "letters/ya_sound"
+      },
+      "primaryWordId": "word_yad",
+      "tracingId": "trace_letter_ya",
+      "status": "published"
     }
   ]
 }

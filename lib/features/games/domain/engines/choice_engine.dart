@@ -2,10 +2,12 @@ import 'dart:math';
 import '../evaluation.dart';
 
 class ChoiceQuestion<T> {
-  const ChoiceQuestion(this.target, this.options, {this.promptAudio});
+  const ChoiceQuestion(this.target, this.options, {this.promptAudio, this.promptImage, this.promptText});
   final T target;
   final List<T> options;
   final String? promptAudio;
+  final String? promptImage;
+  final String? promptText;
 }
 
 class ChoiceEngine<T> {
@@ -18,6 +20,8 @@ class ChoiceEngine<T> {
     int rounds = 3,
     int choices = 3,
     String? Function(T target)? promptAudioFor,
+    String? Function(T target)? promptImageFor,
+    String? Function(T target)? promptTextFor,
     Random? rng,
   }) {
     final r = rng ?? Random();
@@ -25,7 +29,14 @@ class ChoiceEngine<T> {
       final target = targets[i % targets.length];
       final others = pool.where((x) => idOf(x) != idOf(target)).toList()..shuffle(r);
       final options = [target, ...others.take(choices - 1)]..shuffle(r);
-      return ChoiceQuestion<T>(target, options, promptAudio: promptAudioFor?.call(target));
+      
+      return ChoiceQuestion<T>(
+        target, 
+        options, 
+        promptAudio: promptAudioFor?.call(target),
+        promptImage: promptImageFor?.call(target),
+        promptText: promptTextFor?.call(target),
+      );
     });
   }
 

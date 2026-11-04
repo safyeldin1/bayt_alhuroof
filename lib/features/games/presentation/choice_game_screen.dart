@@ -2,15 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../providers/audio_providers.dart';
+import '../../../providers/progress_providers.dart';
 import '../domain/engines/choice_engine.dart';
 import '../domain/evaluation.dart';
-import '../../../providers/progress_providers.dart';
+import '../../../core/animations/star_burst.dart';
+import '../../../core/widgets/kids_background.dart';
 
 class ChoiceGameSetup<T> {
-  const ChoiceGameSetup({required this.questions, this.promptBuilder, this.instructionText});
+  const ChoiceGameSetup({
+    required this.questions, 
+    this.instructionText,
+    this.promptBuilder,
+  });
   final List<ChoiceQuestion<T>> questions;
-  final Widget Function(BuildContext, ChoiceQuestion<T>)? promptBuilder;
   final String? instructionText;
+  final Widget Function(BuildContext, ChoiceQuestion<T>)? promptBuilder;
 }
 
 class ChoiceGameScreen<T> extends ConsumerStatefulWidget {
@@ -69,6 +75,7 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
     final s = _session;
     if (s == null || s.finished || _locked) return;
     final id = widget.idOf(choice);
+    
     switch (s.answer(choice)) {
       case Evaluation.correct:
         setState(() { _okId = id; _locked = true; });
@@ -112,20 +119,26 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
   Widget build(BuildContext context) {
     final s = _session;
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          iconSize: 36,
-          icon: const Icon(Icons.apps),
-          onPressed: () => context.go(widget.backRoute),
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 36, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go(widget.backRoute)),
+              title: s == null ? null : Text('سؤال ${s.index + 1} من ${s.questions.length}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              centerTitle: true,
+            ),
+            Expanded(
+              child: s == null
+                  ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                  : s.finished
+                      ? _Result(stars: s.stars, onReplay: () { setState(() => _session = null); _init(); }, onBack: () => context.go(widget.backRoute))
+                      : _board(context, s),
+            ),
+          ],
         ),
-        title: s == null ? null : Text('سؤال ${s.index + 1} من ${s.questions.length}'),
-        centerTitle: true,
       ),
-      body: s == null
-          ? const Center(child: CircularProgressIndicator())
-          : s.finished
-              ? _Result(stars: s.stars, onReplay: () { setState(() => _session = null); _init(); }, onBack: () => context.go(widget.backRoute))
-              : _board(context, s),
     );
   }
 
@@ -135,30 +148,21 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
     return SafeArea(
       child: Column(
         children: [
-          const SizedBox(height: 24),
-          // تلميح بصري للطفل
+          const SizedBox(height: 16),
           if (_setup?.instructionText != null)
-            Text(
-              _setup!.instructionText!,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+              child: Text(_setup!.instructionText!, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
             ),
           const SizedBox(height: 16),
           if (prompt != null) prompt(context, q),
           
-          // زر السماعة ضخم جداً
           if (q.promptAudio != null)
-            GestureDetector(
-              onTap: _playPrompt,
-              child: Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
-                  shape: BoxShape.circle,
-                  boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 5))],
-                ),
-                child: const Icon(Icons.volume_up, size: 60, color: Colors.white),
-              ),
+            IconButton.filled(
+              iconSize: 64,
+              onPressed: _playPrompt,
+              icon: const Icon(Icons.volume_up),
             ),
           const Spacer(),
           Wrap(
@@ -168,18 +172,15 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
             children: [
               for (final o in q.options)
                 SizedBox(
-                  width: 110,
-                  height: 110,
+                  width: 100,
+                  height: 100,
                   child: FilledButton(
                     style: FilledButton.styleFrom(
                       backgroundColor: widget.idOf(o) == _okId
                           ? Colors.green
                           : (widget.idOf(o) == _wrongId ? Colors.orange.shade300 : Colors.white),
-                      foregroundColor: widget.idOf(o) == _okId || widget.idOf(o) == _wrongId ? Colors.white : Theme.of(context).primaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(color: Theme.of(context).primaryColor, width: 2),
-                      ),
+                      foregroundColor: widget.idOf(o) == _okId || widget.idOf(o) == _wrongId ? Colors.white : const Color(0xFF00796B),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Color(0xFF00796B), width: 3)),
                     ),
                     onPressed: () => _onTap(o),
                     child: widget.optionBuilder(context, ref, o),
@@ -205,11 +206,17 @@ class _Result extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
+            Stack(
+              alignment: Alignment.center,
               children: [
-                for (var i = 0; i < stars; i++)
-                  const Icon(Icons.star, size: 80, color: Colors.amber),
+                StarBurst(stars: stars),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (var i = 0; i < stars; i++)
+                      const Icon(Icons.star, size: 80, color: Colors.amber),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 32),

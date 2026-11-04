@@ -6,9 +6,9 @@ import '../../../data/models/letter.dart';
 import '../../../providers/audio_providers.dart';
 import '../../../providers/content_providers.dart';
 import '../../../core/animations/bounce_in.dart';
-import '../../../core/animations/pulse_hint.dart';
 import '../../../core/widgets/kids_background.dart';
 import '../../../core/widgets/kids_button.dart';
+import '../../../core/widgets/animated_image.dart'; // 👈 الصورة المتحركة
 
 class LetterLessonScreen extends ConsumerStatefulWidget {
   const LetterLessonScreen({super.key, required this.letterId});
@@ -84,110 +84,132 @@ class _LessonBody extends StatelessWidget {
     final next = repo.nextOf(letter);
     final prev = repo.previousOf(letter);
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          // بطاقة الحرف
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(40),
-              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 10))],
-            ),
-            child: Column(
-              children: [
-                BounceIn(
-                  child: Text(letter.character, style: const TextStyle(fontSize: 160, fontWeight: FontWeight.bold, color: Color(0xFF00796B), height: 1.0)),
-                ),
-                Text(letter.name, style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.orange)),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    for (final k in ['isolated', 'initial', 'medial', 'final'])
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text(letter.forms[k] ?? '', style: const TextStyle(fontSize: 40, color: Colors.blueGrey, fontWeight: FontWeight.bold)),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const Spacer(),
-          // بطاقة الكلمة والصوت
-          if (word != null)
+    // استخدام SingleChildScrollView عشان نمنع مشكلة الأصفر والأسود
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            // بطاقة الحرف
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: Colors.orange.shade200, width: 2),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(40),
+                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 10))],
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+              child: Column(
                 children: [
-                  Text(word.textVowelled, style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.orange)),
-                  const SizedBox(width: 16),
-                  PulseHint(
-                    child: GestureDetector(
-                      onTap: onReplay,
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(color: Colors.orange, shape: BoxShape.circle, boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8)]),
-                        child: const Icon(Icons.volume_up, size: 40, color: Colors.white),
-                      ),
-                    ),
+                  BounceIn(
+                    child: Text(letter.character, style: const TextStyle(fontSize: 120, fontWeight: FontWeight.bold, color: Color(0xFF00796B), height: 1.0)),
+                  ),
+                  Text(letter.name, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.orange)),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (final k in ['isolated', 'initial', 'medial', 'final'])
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(letter.forms[k] ?? '', style: const TextStyle(fontSize: 32, color: Colors.blueGrey, fontWeight: FontWeight.bold)),
+                        ),
+                    ],
                   ),
                 ],
               ),
             ),
-          const Spacer(),
-          // أزرار الأنشطة
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              KidsButton(
-                width: 100,
-                height: 100,
-                color: Colors.purple.shade400,
-                onTap: () => context.push('/letters/${letter.id}/recognize'),
-                child: const Icon(Icons.touch_app, size: 48, color: Colors.white),
+            const SizedBox(height: 24),
+            
+            // بطاقة الكلمة والصورة
+            if (word != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: Colors.orange.shade200, width: 2),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedImage(
+                      imagePath: 'assets/images/${word.image}.png',
+                      emoji: word.emoji,
+                      onTap: onReplay,
+                    ),
+                    const SizedBox(width: 24),
+                    Column(
+                      children: [
+                        Text(word.textVowelled, style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.orange)),
+                        const SizedBox(height: 8),
+                        GestureDetector(
+                          onTap: onReplay,
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
+                            child: const Icon(Icons.volume_up, size: 30, color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(width: 24),
-              KidsButton(
-                width: 100,
-                height: 100,
-                color: Colors.teal.shade400,
-                onTap: () => context.push('/letters/${letter.id}/trace'),
-                child: const Icon(Icons.draw, size: 48, color: Colors.white),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          // أزرار التنقل
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton.filled(
-                style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.teal),
-                iconSize: 48,
-                onPressed: prev == null ? null : () => context.pushReplacement('/letters/${prev.id}'),
-                icon: const Icon(Icons.arrow_back),
-              ),
-              IconButton.filled(
-                style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.teal),
-                iconSize: 48,
-                onPressed: next == null ? null : () => context.pushReplacement('/letters/${next.id}'),
-                icon: const Icon(Icons.arrow_forward),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-        ],
+            const SizedBox(height: 32),
+            
+            // أزرار الأنشطة
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                KidsButton(
+                  width: 80,
+                  height: 80,
+                  color: Colors.purple.shade400,
+                  onTap: () => context.push('/letters/${letter.id}/recognize'),
+                  child: const Icon(Icons.touch_app, size: 40, color: Colors.white),
+                ),
+                const SizedBox(width: 16),
+                KidsButton(
+                  width: 80,
+                  height: 80,
+                  color: Colors.amber.shade600,
+                  onTap: () => context.push('/letters/${letter.id}/match'),
+                  child: const Icon(Icons.image, size: 40, color: Colors.white),
+                ),
+                const SizedBox(width: 16),
+                KidsButton(
+                  width: 80,
+                  height: 80,
+                  color: Colors.teal.shade400,
+                  onTap: () => context.push('/letters/${letter.id}/trace'),
+                  child: const Icon(Icons.draw, size: 40, color: Colors.white),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            
+            // أزرار التنقل
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton.filled(
+                  style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.teal),
+                  iconSize: 40,
+                  onPressed: prev == null ? null : () => context.pushReplacement('/letters/${prev.id}'),
+                  icon: const Icon(Icons.arrow_back),
+                ),
+                IconButton.filled(
+                  style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.teal),
+                  iconSize: 40,
+                  onPressed: next == null ? null : () => context.pushReplacement('/letters/${next.id}'),
+                  icon: const Icon(Icons.arrow_forward),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }

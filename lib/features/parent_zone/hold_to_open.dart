@@ -44,18 +44,18 @@ class _HoldToOpenState extends State<HoldToOpen> with SingleTickerProviderStateM
               animation: _controller,
               builder: (context, child) {
                 return SizedBox(
-                  width: 60,
-                  height: 60,
+                  width: 50,
+                  height: 50,
                   child: CircularProgressIndicator(
                     value: _controller.value,
                     color: Colors.white,
                     backgroundColor: Colors.white24,
-                    strokeWidth: 5,
+                    strokeWidth: 4,
                   ),
                 );
               },
             ),
-            const Icon(Icons.lock_outline, color: Colors.white, size: 28),
+            const Icon(Icons.lock_outline, color: Colors.white, size: 24),
           ],
         ),
       ),

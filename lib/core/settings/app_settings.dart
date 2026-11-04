@@ -32,6 +32,8 @@ class SettingsController extends Notifier<AppSettings> {
   Future<void> setVolume(double v) async {
     state = state.copyWith(voiceVolume: v);
     await ref.read(sharedPreferencesProvider).setDouble(_kVolume, v);
+    // تحديث الصوت في الخدمة
+    // ref.read(audioServiceProvider).voiceVolume = v; // سنحتاج نمررها لاحقاً
   }
 
   Future<void> setNumerals(NumeralStyle s) async {

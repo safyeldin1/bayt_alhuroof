@@ -32,47 +32,49 @@ class _ParentGateScreenState extends ConsumerState<ParentGateScreen> {
 
     return Scaffold(
       body: KidsBackground(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.security, size: 80, color: Colors.white),
-              const SizedBox(height: 16),
-              const Text('منطقة وليّ الأمر', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
-              const Text('للكبار فقط: أجب على السؤال', style: TextStyle(fontSize: 20, color: Colors.white70)),
-              const SizedBox(height: 40),
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
-                child: Column(
-                  children: [
-                    Text('${f(_challenge.a)} × ${f(_challenge.b)} = ؟', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 24),
-                    Wrap(
-                      spacing: 16,
-                      runSpacing: 16,
-                      children: [
-                        for (final o in _challenge.options)
-                          SizedBox(
-                            width: 80,
-                            height: 80,
-                            child: FilledButton(
-                              onPressed: () => _pick(o),
-                              child: Text(f(o), style: const TextStyle(fontSize: 28)),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.security, size: 80, color: Colors.white),
+                const SizedBox(height: 16),
+                const Text('منطقة وليّ الأمر', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+                const Text('للكبار فقط: أجب على السؤال', style: TextStyle(fontSize: 20, color: Colors.white70)),
+                const SizedBox(height: 40),
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
+                  child: Column(
+                    children: [
+                      Text('${f(_challenge.a)} × ${f(_challenge.b)} = ؟', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 24),
+                      Wrap(
+                        spacing: 16,
+                        runSpacing: 16,
+                        children: [
+                          for (final o in _challenge.options)
+                            SizedBox(
+                              width: 80,
+                              height: 80,
+                              child: FilledButton(
+                                onPressed: () => _pick(o),
+                                child: Text(f(o), style: const TextStyle(fontSize: 28)),
+                              ),
                             ),
-                          ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 40),
-              TextButton(
-                onPressed: () => context.go('/'),
-                child: const Text('رجوع', style: TextStyle(color: Colors.white, fontSize: 20)),
-              ),
-            ],
+                const SizedBox(height: 40),
+                TextButton(
+                  onPressed: () => context.go('/'),
+                  child: const Text('رجوع', style: TextStyle(color: Colors.white, fontSize: 20)),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -35,30 +35,42 @@ class NumbersScreen extends ConsumerWidget {
               child: repo.when(
                 loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
                 error: (e, _) => Center(child: Text('خطأ: $e', style: const TextStyle(color: Colors.white))),
-                data: (r) => GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                  ),
-                  itemCount: r.numbers.length,
-                  itemBuilder: (context, i) {
-                    final n = r.numbers[i];
-                    final earnedStars = stars[n.id] ?? 0;
-                    return Stack(
-                      children: [
-                        BounceIn(
-                          child: KidsButton(
-                            color: const Color(0xFF29B6F6), // أزرق مبهج
-                            height: 100,
-                            onTap: () => context.push('/numbers/${n.id}'),
-                            child: Text(_formatNumber(n.value), style: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Colors.white)),
-                          ),
-                        ),
-                        if (earnedStars > 0)
-                          const PositionedDirectional(top: 4, end: 4, child: Icon(Icons.star, color: Colors.amber, size: 32)),
-                      ],
+                data: (r) => LayoutBuilder(
+                  builder: (context, constraints) {
+                    int crossAxisCount = constraints.maxWidth > 900 ? 6 : (constraints.maxWidth > 600 ? 4 : 3);
+                    
+                    return GridView.builder(
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16,
+                        childAspectRatio: 1.0,
+                      ),
+                      itemCount: r.numbers.length,
+                      itemBuilder: (context, i) {
+                        final n = r.numbers[i];
+                        final earnedStars = stars[n.id] ?? 0;
+                        return Stack(
+                          children: [
+                            Positioned.fill(
+                              child: KidsButton(
+                                color: const Color(0xFF29B6F6),
+                                onTap: () => context.push('/numbers/${n.id}'),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(_formatNumber(n.value), style: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Colors.white)),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (earnedStars > 0)
+                              const PositionedDirectional(top: 4, end: 4, child: Icon(Icons.star, color: Colors.amber, size: 28)),
+                          ],
+                        );
+                      },
                     );
                   },
                 ),

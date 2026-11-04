@@ -1,5 +1,5 @@
 # 💻 كود المشروع الكامل
-> آخر تحديث: 2026-11-03 15:11:19
+> آخر تحديث: 2026-11-04 18:09:29
 ```yaml
 name: bayt_alhuroof
 description: "A new Flutter project."
@@ -338,6 +338,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (c, s) => RecognizeLetterGame(letterId: s.pathParameters['id']!),
       ),
       GoRoute(
+        path: '/letters/:id/match',
+        builder: (c, s) => MatchImageGame(letterId: s.pathParameters['id']!),
+      ),
+      GoRoute(
         path: '/letters/:id/trace',
         builder: (c, s) => TracingScreen(letterId: s.pathParameters['id']!),
       ),
@@ -396,6 +400,8 @@ class SettingsController extends Notifier<AppSettings> {
   Future<void> setVolume(double v) async {
     state = state.copyWith(voiceVolume: v);
     await ref.read(sharedPreferencesProvider).setDouble(_kVolume, v);
+    // تحديث الصوت في الخدمة
+    // ref.read(audioServiceProvider).voiceVolume = v; // سنحتاج نمررها لاحقاً
   }
 
   Future<void> setNumerals(NumeralStyle s) async {
@@ -426,6 +432,84 @@ String formatNumber(int n, NumeralStyle style) {
   if (style == NumeralStyle.western) return n.toString();
   const digits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
   return n.toString().split('').map((c) => digits[int.parse(c)]).join();
+}
+```
+## 📄 `lib/core/widgets/animated_image.dart`
+```dart
+import 'package:flutter/material.dart';
+
+class AnimatedImage extends StatefulWidget {
+  const AnimatedImage({super.key, required this.imagePath, required this.emoji, required this.onTap});
+  final String imagePath;
+  final String emoji;
+  final VoidCallback onTap;
+
+  @override
+  State<AnimatedImage> createState() => _AnimatedImageState();
+}
+
+class _AnimatedImageState extends State<AnimatedImage> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _bounceAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..repeat(reverse: true);
+    _bounceAnimation = Tween<double>(begin: 0.0, end: -15.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        widget.onTap();
+        _controller.repeat(reverse: true);
+      },
+      child: AnimatedBuilder(
+        animation: _bounceAnimation,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, _bounceAnimation.value),
+            child: Container(
+              width: 160,
+              height: 160,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.orange.withOpacity(0.4),
+                    blurRadius: 25,
+                    spreadRadius: 5,
+                  )
+                ],
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  widget.imagePath,
+                  fit: BoxFit.cover,
+                  // لو الصورة مش موجودة، بنعرض الإيموجي
+                  errorBuilder: (context, error, stackTrace) => Center(
+                    child: Text(widget.emoji, style: const TextStyle(fontSize: 80)),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
 ```
 ## 📄 `lib/core/widgets/kids_background.dart`
@@ -2143,6 +2227,7 @@ class Word {
   const Word({
     required this.id, required this.text, required this.textVowelled,
     required this.startsWithLetterId, required this.image, required this.audio,
+    required this.emoji,
   });
 
   final String id;
@@ -2151,6 +2236,7 @@ class Word {
   final String startsWithLetterId;
   final String image;
   final String audio;
+  final String emoji;
 
   factory Word.fromJson(Map<String, dynamic> j) => Word(
         id: j['id'] as String,
@@ -2159,6 +2245,7 @@ class Word {
         startsWithLetterId: j['startsWithLetterId'] as String,
         image: j['image'] as String,
         audio: j['audio'] as String,
+        emoji: j['emoji'] as String? ?? '❓',
       );
 }
 ```
@@ -2233,10 +2320,12 @@ import 'dart:math';
 import '../evaluation.dart';
 
 class ChoiceQuestion<T> {
-  const ChoiceQuestion(this.target, this.options, {this.promptAudio});
+  const ChoiceQuestion(this.target, this.options, {this.promptAudio, this.promptImage, this.promptText});
   final T target;
   final List<T> options;
   final String? promptAudio;
+  final String? promptImage;
+  final String? promptText;
 }
 
 class ChoiceEngine<T> {
@@ -2249,6 +2338,8 @@ class ChoiceEngine<T> {
     int rounds = 3,
     int choices = 3,
     String? Function(T target)? promptAudioFor,
+    String? Function(T target)? promptImageFor,
+    String? Function(T target)? promptTextFor,
     Random? rng,
   }) {
     final r = rng ?? Random();
@@ -2256,7 +2347,14 @@ class ChoiceEngine<T> {
       final target = targets[i % targets.length];
       final others = pool.where((x) => idOf(x) != idOf(target)).toList()..shuffle(r);
       final options = [target, ...others.take(choices - 1)]..shuffle(r);
-      return ChoiceQuestion<T>(target, options, promptAudio: promptAudioFor?.call(target));
+      
+      return ChoiceQuestion<T>(
+        target, 
+        options, 
+        promptAudio: promptAudioFor?.call(target),
+        promptImage: promptImageFor?.call(target),
+        promptText: promptTextFor?.call(target),
+      );
     });
   }
 
@@ -2303,15 +2401,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../providers/audio_providers.dart';
+import '../../../providers/progress_providers.dart';
 import '../domain/engines/choice_engine.dart';
 import '../domain/evaluation.dart';
-import '../../../providers/progress_providers.dart';
+import '../../../core/animations/star_burst.dart';
+import '../../../core/widgets/kids_background.dart';
 
 class ChoiceGameSetup<T> {
-  const ChoiceGameSetup({required this.questions, this.promptBuilder, this.instructionText});
+  const ChoiceGameSetup({
+    required this.questions, 
+    this.instructionText,
+    this.promptBuilder,
+  });
   final List<ChoiceQuestion<T>> questions;
-  final Widget Function(BuildContext, ChoiceQuestion<T>)? promptBuilder;
   final String? instructionText;
+  final Widget Function(BuildContext, ChoiceQuestion<T>)? promptBuilder;
 }
 
 class ChoiceGameScreen<T> extends ConsumerStatefulWidget {
@@ -2370,6 +2474,7 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
     final s = _session;
     if (s == null || s.finished || _locked) return;
     final id = widget.idOf(choice);
+    
     switch (s.answer(choice)) {
       case Evaluation.correct:
         setState(() { _okId = id; _locked = true; });
@@ -2413,20 +2518,26 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
   Widget build(BuildContext context) {
     final s = _session;
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          iconSize: 36,
-          icon: const Icon(Icons.apps),
-          onPressed: () => context.go(widget.backRoute),
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 36, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go(widget.backRoute)),
+              title: s == null ? null : Text('سؤال ${s.index + 1} من ${s.questions.length}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              centerTitle: true,
+            ),
+            Expanded(
+              child: s == null
+                  ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                  : s.finished
+                      ? _Result(stars: s.stars, onReplay: () { setState(() => _session = null); _init(); }, onBack: () => context.go(widget.backRoute))
+                      : _board(context, s),
+            ),
+          ],
         ),
-        title: s == null ? null : Text('سؤال ${s.index + 1} من ${s.questions.length}'),
-        centerTitle: true,
       ),
-      body: s == null
-          ? const Center(child: CircularProgressIndicator())
-          : s.finished
-              ? _Result(stars: s.stars, onReplay: () { setState(() => _session = null); _init(); }, onBack: () => context.go(widget.backRoute))
-              : _board(context, s),
     );
   }
 
@@ -2436,30 +2547,21 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
     return SafeArea(
       child: Column(
         children: [
-          const SizedBox(height: 24),
-          // تلميح بصري للطفل
+          const SizedBox(height: 16),
           if (_setup?.instructionText != null)
-            Text(
-              _setup!.instructionText!,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+              child: Text(_setup!.instructionText!, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
             ),
           const SizedBox(height: 16),
           if (prompt != null) prompt(context, q),
           
-          // زر السماعة ضخم جداً
           if (q.promptAudio != null)
-            GestureDetector(
-              onTap: _playPrompt,
-              child: Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
-                  shape: BoxShape.circle,
-                  boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 5))],
-                ),
-                child: const Icon(Icons.volume_up, size: 60, color: Colors.white),
-              ),
+            IconButton.filled(
+              iconSize: 64,
+              onPressed: _playPrompt,
+              icon: const Icon(Icons.volume_up),
             ),
           const Spacer(),
           Wrap(
@@ -2469,18 +2571,15 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
             children: [
               for (final o in q.options)
                 SizedBox(
-                  width: 110,
-                  height: 110,
+                  width: 100,
+                  height: 100,
                   child: FilledButton(
                     style: FilledButton.styleFrom(
                       backgroundColor: widget.idOf(o) == _okId
                           ? Colors.green
                           : (widget.idOf(o) == _wrongId ? Colors.orange.shade300 : Colors.white),
-                      foregroundColor: widget.idOf(o) == _okId || widget.idOf(o) == _wrongId ? Colors.white : Theme.of(context).primaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(color: Theme.of(context).primaryColor, width: 2),
-                      ),
+                      foregroundColor: widget.idOf(o) == _okId || widget.idOf(o) == _wrongId ? Colors.white : const Color(0xFF00796B),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Color(0xFF00796B), width: 3)),
                     ),
                     onPressed: () => _onTap(o),
                     child: widget.optionBuilder(context, ref, o),
@@ -2506,11 +2605,17 @@ class _Result extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
+            Stack(
+              alignment: Alignment.center,
               children: [
-                for (var i = 0; i < stars; i++)
-                  const Icon(Icons.star, size: 80, color: Colors.amber),
+                StarBurst(stars: stars),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (var i = 0; i < stars; i++)
+                      const Icon(Icons.star, size: 80, color: Colors.amber),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 32),
@@ -2560,10 +2665,7 @@ class RecognizeLetterGame extends StatelessWidget {
             ),
           );
         },
-        optionBuilder: (c, ref, l) => Text(
-          l.character,
-          style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold),
-        ),
+        optionBuilder: (c, ref, l) => Text(l.character, style: const TextStyle(fontSize: 56, fontWeight: FontWeight.bold)),
       );
 }
 
@@ -2603,7 +2705,52 @@ class PickNumberGame extends StatelessWidget {
             ),
           );
         },
-        optionBuilder: (c, ref, n) => Text(_formatNumber(n.value), style: const TextStyle(fontSize: 64, fontWeight: FontWeight.bold)),
+        optionBuilder: (c, ref, n) => Text(_formatNumber(n.value), style: const TextStyle(fontSize: 56, fontWeight: FontWeight.bold)),
+      );
+}
+
+// لعبة جديدة: مطابقة الصورة بالحرف
+class MatchImageGame extends StatelessWidget {
+  const MatchImageGame({super.key, required this.letterId});
+  final String letterId;
+
+  @override
+  Widget build(BuildContext context) => ChoiceGameScreen<Letter>(
+        activityId: 'match_image_$letterId',
+        contentId: letterId,
+        kind: 'letter',
+        backRoute: '/letters/$letterId',
+        idOf: (l) => l.id,
+        setup: (ref) async {
+          final repo = await ref.read(contentRepositoryProvider.future);
+          final target = repo.letterById(letterId);
+          if (target == null) return const ChoiceGameSetup(questions: []);
+          
+          final word = repo.wordById(target.primaryWordId);
+          
+          return ChoiceGameSetup(
+            instructionText: 'ما هو الحرف الذي تبدأ به هذه الصورة؟',
+            promptBuilder: (ctx, q) {
+              if (word == null) return const SizedBox.shrink();
+              return Container(
+                width: 160, height: 160,
+                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)]),
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/images/${word.image}.png',
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Center(child: Text(word.emoji, style: const TextStyle(fontSize: 80))),
+                  ),
+                ),
+              );
+            },
+            questions: ChoiceEngine<Letter>((l) => l.id).build(
+              targets: [target],
+              pool: repo.letters,
+            ),
+          );
+        },
+        optionBuilder: (c, ref, l) => Text(l.character, style: const TextStyle(fontSize: 56, fontWeight: FontWeight.bold)),
       );
 }
 ```
@@ -2622,55 +2769,104 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // معرفة إذا كانت الشاشة عرضية أم طولية
+    final isLandscape = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+
+    // تصميم الزر
+    Widget buildMenuButton(String title, String letter, String route, Color color) {
+      return Floating(
+        child: BounceIn(
+          child: KidsButton(
+            width: isLandscape ? 220 : 180,
+            height: isLandscape ? 160 : 160,
+            color: color,
+            onTap: () => context.go(route),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(letter, style: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Colors.white, height: 1.0)),
+                const SizedBox(height: 8),
+                Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: KidsBackground(
         child: Stack(
           children: [
-            // المحتوى الأساسي
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Floating(
-                    child: BounceIn(
-                      child: Text(
-                        'بيت الحروف',
-                        style: TextStyle(
-                          fontSize: 60,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          shadows: [
-                            Shadow(color: Color(0xFF00796B), offset: Offset(4, 4), blurRadius: 0),
-                          ],
+            Center(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // صورة البومة
+                      Floating(
+                        child: BounceIn(
+                          child: Container(
+                            width: isLandscape ? 120 : 140,
+                            height: isLandscape ? 120 : 140,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 15, offset: Offset(0, 8))],
+                            ),
+                            child: ClipOval(
+                              child: Image.asset(
+                                'assets/images/ui/mascot.png',
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(Icons.school, size: 80, color: Colors.blue),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 60),
-                  Floating(
-                    child: BounceIn(
-                      child: KidsButton(
-                        color: const Color(0xFFFF7043),
-                        onTap: () => context.go('/letters'),
-                        child: const Text('أ', style: TextStyle(fontSize: 80, fontWeight: FontWeight.bold, color: Colors.white)),
+                      SizedBox(height: isLandscape ? 16 : 24),
+                      // العنوان
+                      const Floating(
+                        child: BounceIn(
+                          child: Text(
+                            'بيت الحروف',
+                            style: TextStyle(
+                              fontSize: 56,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              shadows: [Shadow(color: Color(0xFF00796B), offset: Offset(4, 4), blurRadius: 0)],
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      SizedBox(height: isLandscape ? 32 : 48),
+                      
+                      // الأزرار (عرضية أو طولية)
+                      if (isLandscape)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            buildMenuButton('الحروف', 'أ', '/letters', const Color(0xFFFF7043)),
+                            const SizedBox(width: 48),
+                            buildMenuButton('الأرقام', '١', '/numbers', const Color(0xFF29B6F6)),
+                          ],
+                        )
+                      else
+                        Column(
+                          children: [
+                            buildMenuButton('الحروف', 'أ', '/letters', const Color(0xFFFF7043)),
+                            const SizedBox(height: 32),
+                            buildMenuButton('الأرقام', '١', '/numbers', const Color(0xFF29B6F6)),
+                          ],
+                        ),
+                    ],
                   ),
-                  const SizedBox(height: 40),
-                  Floating(
-                    child: BounceIn(
-                      child: KidsButton(
-                        color: const Color(0xFF29B6F6),
-                        onTap: () => context.go('/numbers'),
-                        child: const Text('١', style: TextStyle(fontSize: 80, fontWeight: FontWeight.bold, color: Colors.white)),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
-            // زر القفل في الأعلى
+            // زر القفل
             PositionedDirectional(
               top: 10,
               end: 10,
@@ -2697,9 +2893,9 @@ import '../../../data/models/letter.dart';
 import '../../../providers/audio_providers.dart';
 import '../../../providers/content_providers.dart';
 import '../../../core/animations/bounce_in.dart';
-import '../../../core/animations/pulse_hint.dart';
 import '../../../core/widgets/kids_background.dart';
 import '../../../core/widgets/kids_button.dart';
+import '../../../core/widgets/animated_image.dart'; // 👈 الصورة المتحركة
 
 class LetterLessonScreen extends ConsumerStatefulWidget {
   const LetterLessonScreen({super.key, required this.letterId});
@@ -2775,110 +2971,132 @@ class _LessonBody extends StatelessWidget {
     final next = repo.nextOf(letter);
     final prev = repo.previousOf(letter);
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          // بطاقة الحرف
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(40),
-              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 10))],
-            ),
-            child: Column(
-              children: [
-                BounceIn(
-                  child: Text(letter.character, style: const TextStyle(fontSize: 160, fontWeight: FontWeight.bold, color: Color(0xFF00796B), height: 1.0)),
-                ),
-                Text(letter.name, style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.orange)),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    for (final k in ['isolated', 'initial', 'medial', 'final'])
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text(letter.forms[k] ?? '', style: const TextStyle(fontSize: 40, color: Colors.blueGrey, fontWeight: FontWeight.bold)),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const Spacer(),
-          // بطاقة الكلمة والصوت
-          if (word != null)
+    // استخدام SingleChildScrollView عشان نمنع مشكلة الأصفر والأسود
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            // بطاقة الحرف
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: Colors.orange.shade200, width: 2),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(40),
+                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 10))],
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+              child: Column(
                 children: [
-                  Text(word.textVowelled, style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.orange)),
-                  const SizedBox(width: 16),
-                  PulseHint(
-                    child: GestureDetector(
-                      onTap: onReplay,
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(color: Colors.orange, shape: BoxShape.circle, boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8)]),
-                        child: const Icon(Icons.volume_up, size: 40, color: Colors.white),
-                      ),
-                    ),
+                  BounceIn(
+                    child: Text(letter.character, style: const TextStyle(fontSize: 120, fontWeight: FontWeight.bold, color: Color(0xFF00796B), height: 1.0)),
+                  ),
+                  Text(letter.name, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.orange)),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (final k in ['isolated', 'initial', 'medial', 'final'])
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(letter.forms[k] ?? '', style: const TextStyle(fontSize: 32, color: Colors.blueGrey, fontWeight: FontWeight.bold)),
+                        ),
+                    ],
                   ),
                 ],
               ),
             ),
-          const Spacer(),
-          // أزرار الأنشطة
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              KidsButton(
-                width: 100,
-                height: 100,
-                color: Colors.purple.shade400,
-                onTap: () => context.push('/letters/${letter.id}/recognize'),
-                child: const Icon(Icons.touch_app, size: 48, color: Colors.white),
+            const SizedBox(height: 24),
+            
+            // بطاقة الكلمة والصورة
+            if (word != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: Colors.orange.shade200, width: 2),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedImage(
+                      imagePath: 'assets/images/${word.image}.png',
+                      emoji: word.emoji,
+                      onTap: onReplay,
+                    ),
+                    const SizedBox(width: 24),
+                    Column(
+                      children: [
+                        Text(word.textVowelled, style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.orange)),
+                        const SizedBox(height: 8),
+                        GestureDetector(
+                          onTap: onReplay,
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
+                            child: const Icon(Icons.volume_up, size: 30, color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(width: 24),
-              KidsButton(
-                width: 100,
-                height: 100,
-                color: Colors.teal.shade400,
-                onTap: () => context.push('/letters/${letter.id}/trace'),
-                child: const Icon(Icons.draw, size: 48, color: Colors.white),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          // أزرار التنقل
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton.filled(
-                style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.teal),
-                iconSize: 48,
-                onPressed: prev == null ? null : () => context.pushReplacement('/letters/${prev.id}'),
-                icon: const Icon(Icons.arrow_back),
-              ),
-              IconButton.filled(
-                style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.teal),
-                iconSize: 48,
-                onPressed: next == null ? null : () => context.pushReplacement('/letters/${next.id}'),
-                icon: const Icon(Icons.arrow_forward),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-        ],
+            const SizedBox(height: 32),
+            
+            // أزرار الأنشطة
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                KidsButton(
+                  width: 80,
+                  height: 80,
+                  color: Colors.purple.shade400,
+                  onTap: () => context.push('/letters/${letter.id}/recognize'),
+                  child: const Icon(Icons.touch_app, size: 40, color: Colors.white),
+                ),
+                const SizedBox(width: 16),
+                KidsButton(
+                  width: 80,
+                  height: 80,
+                  color: Colors.amber.shade600,
+                  onTap: () => context.push('/letters/${letter.id}/match'),
+                  child: const Icon(Icons.image, size: 40, color: Colors.white),
+                ),
+                const SizedBox(width: 16),
+                KidsButton(
+                  width: 80,
+                  height: 80,
+                  color: Colors.teal.shade400,
+                  onTap: () => context.push('/letters/${letter.id}/trace'),
+                  child: const Icon(Icons.draw, size: 40, color: Colors.white),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            
+            // أزرار التنقل
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton.filled(
+                  style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.teal),
+                  iconSize: 40,
+                  onPressed: prev == null ? null : () => context.pushReplacement('/letters/${prev.id}'),
+                  icon: const Icon(Icons.arrow_back),
+                ),
+                IconButton.filled(
+                  style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.teal),
+                  iconSize: 40,
+                  onPressed: next == null ? null : () => context.pushReplacement('/letters/${next.id}'),
+                  icon: const Icon(Icons.arrow_forward),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }
@@ -2893,6 +3111,7 @@ import '../../../providers/content_providers.dart';
 import '../../../providers/progress_providers.dart';
 import '../../../core/widgets/kids_background.dart';
 import '../../../core/widgets/kids_button.dart';
+import '../../../core/animations/bounce_in.dart';
 
 class LettersScreen extends ConsumerWidget {
   const LettersScreen({super.key});
@@ -2917,28 +3136,42 @@ class LettersScreen extends ConsumerWidget {
               child: repo.when(
                 loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
                 error: (e, _) => Center(child: Text('خطأ: $e', style: const TextStyle(color: Colors.white))),
-                data: (r) => GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                  ),
-                  itemCount: r.letters.length,
-                  itemBuilder: (context, i) {
-                    final l = r.letters[i];
-                    final earnedStars = stars[l.id] ?? 0;
-                    return Stack(
-                      children: [
-                        KidsButton(
-                          color: Colors.white,
-                          height: 100,
-                          onTap: () => context.push('/letters/${l.id}'),
-                          child: Text(l.character, style: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
-                        ),
-                        if (earnedStars > 0)
-                          const PositionedDirectional(top: 4, end: 4, child: Icon(Icons.star, color: Colors.amber, size: 32)),
-                      ],
+                data: (r) => LayoutBuilder(
+                  builder: (context, constraints) {
+                    int crossAxisCount = constraints.maxWidth > 900 ? 6 : (constraints.maxWidth > 600 ? 4 : 3);
+                    
+                    return GridView.builder(
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16,
+                        childAspectRatio: 1.0,
+                      ),
+                      itemCount: r.letters.length,
+                      itemBuilder: (context, i) {
+                        final l = r.letters[i];
+                        final earnedStars = stars[l.id] ?? 0;
+                        return Stack(
+                          children: [
+                            Positioned.fill(
+                              child: KidsButton(
+                                color: Colors.white,
+                                onTap: () => context.push('/letters/${l.id}'),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(l.character, style: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (earnedStars > 0)
+                              const PositionedDirectional(top: 4, end: 4, child: Icon(Icons.star, color: Colors.amber, size: 28)),
+                          ],
+                        );
+                      },
                     );
                   },
                 ),
@@ -3185,30 +3418,42 @@ class NumbersScreen extends ConsumerWidget {
               child: repo.when(
                 loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
                 error: (e, _) => Center(child: Text('خطأ: $e', style: const TextStyle(color: Colors.white))),
-                data: (r) => GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                  ),
-                  itemCount: r.numbers.length,
-                  itemBuilder: (context, i) {
-                    final n = r.numbers[i];
-                    final earnedStars = stars[n.id] ?? 0;
-                    return Stack(
-                      children: [
-                        BounceIn(
-                          child: KidsButton(
-                            color: const Color(0xFF29B6F6), // أزرق مبهج
-                            height: 100,
-                            onTap: () => context.push('/numbers/${n.id}'),
-                            child: Text(_formatNumber(n.value), style: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Colors.white)),
-                          ),
-                        ),
-                        if (earnedStars > 0)
-                          const PositionedDirectional(top: 4, end: 4, child: Icon(Icons.star, color: Colors.amber, size: 32)),
-                      ],
+                data: (r) => LayoutBuilder(
+                  builder: (context, constraints) {
+                    int crossAxisCount = constraints.maxWidth > 900 ? 6 : (constraints.maxWidth > 600 ? 4 : 3);
+                    
+                    return GridView.builder(
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16,
+                        childAspectRatio: 1.0,
+                      ),
+                      itemCount: r.numbers.length,
+                      itemBuilder: (context, i) {
+                        final n = r.numbers[i];
+                        final earnedStars = stars[n.id] ?? 0;
+                        return Stack(
+                          children: [
+                            Positioned.fill(
+                              child: KidsButton(
+                                color: const Color(0xFF29B6F6),
+                                onTap: () => context.push('/numbers/${n.id}'),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(_formatNumber(n.value), style: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Colors.white)),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (earnedStars > 0)
+                              const PositionedDirectional(top: 4, end: 4, child: Icon(Icons.star, color: Colors.amber, size: 28)),
+                          ],
+                        );
+                      },
                     );
                   },
                 ),
@@ -3269,18 +3514,18 @@ class _HoldToOpenState extends State<HoldToOpen> with SingleTickerProviderStateM
               animation: _controller,
               builder: (context, child) {
                 return SizedBox(
-                  width: 60,
-                  height: 60,
+                  width: 50,
+                  height: 50,
                   child: CircularProgressIndicator(
                     value: _controller.value,
                     color: Colors.white,
                     backgroundColor: Colors.white24,
-                    strokeWidth: 5,
+                    strokeWidth: 4,
                   ),
                 );
               },
             ),
-            const Icon(Icons.lock_outline, color: Colors.white, size: 28),
+            const Icon(Icons.lock_outline, color: Colors.white, size: 24),
           ],
         ),
       ),
@@ -3299,8 +3544,8 @@ class ParentGateChallenge {
 
   factory ParentGateChallenge.generate([Random? rng]) {
     final r = rng ?? Random();
-    final a = r.nextInt(6) + 4; // 4 to 9
-    final b = r.nextInt(6) + 4; // 4 to 9
+    final a = r.nextInt(6) + 4;
+    final b = r.nextInt(6) + 4;
     final answer = a * b;
     final options = <int>{answer, answer + 2, answer - 3, answer + 5}.toList()..shuffle(r);
     return ParentGateChallenge(a: a, b: b, answer: answer, options: options);
@@ -3345,47 +3590,49 @@ class _ParentGateScreenState extends ConsumerState<ParentGateScreen> {
 
     return Scaffold(
       body: KidsBackground(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.security, size: 80, color: Colors.white),
-              const SizedBox(height: 16),
-              const Text('منطقة وليّ الأمر', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
-              const Text('للكبار فقط: أجب على السؤال', style: TextStyle(fontSize: 20, color: Colors.white70)),
-              const SizedBox(height: 40),
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
-                child: Column(
-                  children: [
-                    Text('${f(_challenge.a)} × ${f(_challenge.b)} = ؟', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 24),
-                    Wrap(
-                      spacing: 16,
-                      runSpacing: 16,
-                      children: [
-                        for (final o in _challenge.options)
-                          SizedBox(
-                            width: 80,
-                            height: 80,
-                            child: FilledButton(
-                              onPressed: () => _pick(o),
-                              child: Text(f(o), style: const TextStyle(fontSize: 28)),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.security, size: 80, color: Colors.white),
+                const SizedBox(height: 16),
+                const Text('منطقة وليّ الأمر', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+                const Text('للكبار فقط: أجب على السؤال', style: TextStyle(fontSize: 20, color: Colors.white70)),
+                const SizedBox(height: 40),
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
+                  child: Column(
+                    children: [
+                      Text('${f(_challenge.a)} × ${f(_challenge.b)} = ؟', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 24),
+                      Wrap(
+                        spacing: 16,
+                        runSpacing: 16,
+                        children: [
+                          for (final o in _challenge.options)
+                            SizedBox(
+                              width: 80,
+                              height: 80,
+                              child: FilledButton(
+                                onPressed: () => _pick(o),
+                                child: Text(f(o), style: const TextStyle(fontSize: 28)),
+                              ),
                             ),
-                          ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 40),
-              TextButton(
-                onPressed: () => context.go('/'),
-                child: const Text('رجوع', style: TextStyle(color: Colors.white, fontSize: 20)),
-              ),
-            ],
+                const SizedBox(height: 40),
+                TextButton(
+                  onPressed: () => context.go('/'),
+                  child: const Text('رجوع', style: TextStyle(color: Colors.white, fontSize: 20)),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -3474,6 +3721,54 @@ class ParentScreen extends ConsumerWidget {
             textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+  }
+}
+```
+## 📄 `lib/features/rewards/presentation/rewards_screen.dart`
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../providers/progress_providers.dart';
+import '../../../core/widgets/kids_background.dart';
+
+class RewardsScreen extends ConsumerWidget {
+  const RewardsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stars = ref.watch(starsProvider).valueOrNull ?? const {};
+    final totalStars = stars.values.fold<int>(0, (sum, s) => sum + s);
+
+    return Scaffold(
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
+              title: const Text('المكافآت', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+              centerTitle: true,
+            ),
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.emoji_events, size: 120, color: Colors.amber),
+                    const SizedBox(height: 24),
+                    Text('إجمالي النجوم: $totalStars', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white)),
+                    const SizedBox(height: 16),
+                    const Text('استمر في اللعب لتجمع المزيد!', style: TextStyle(fontSize: 20, color: Colors.white70)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
