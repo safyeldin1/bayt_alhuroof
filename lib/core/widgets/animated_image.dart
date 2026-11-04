@@ -50,7 +50,7 @@ class _AnimatedImageState extends State<AnimatedImage> with SingleTickerProvider
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.orange.withOpacity(0.4),
+                    color: Colors.orange.withValues(alpha: 0.4),
                     blurRadius: 25,
                     spreadRadius: 5,
                   )

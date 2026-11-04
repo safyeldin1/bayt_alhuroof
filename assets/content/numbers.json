@@ -1,11 +1,813 @@
 {
   "schema": 1,
   "items": [
-    { "id": "number_0", "value": 0, "nameText": "صِفْر", "audio": "numbers/0", "objectImage": "ui/empty", "status": "published" },
-    { "id": "number_1", "value": 1, "nameText": "وَاحِد", "audio": "numbers/1", "objectImage": "ui/apple", "status": "published" },
-    { "id": "number_2", "value": 2, "nameText": "اِثْنَان", "audio": "numbers/2", "objectImage": "ui/apple", "status": "published" },
-    { "id": "number_3", "value": 3, "nameText": "ثَلَاثَة", "audio": "numbers/3", "objectImage": "ui/apple", "status": "published" },
-    { "id": "number_4", "value": 4, "nameText": "أَرْبَعَة", "audio": "numbers/4", "objectImage": "ui/apple", "status": "published" },
-    { "id": "number_5", "value": 5, "nameText": "خَمْسَة", "audio": "numbers/5", "objectImage": "ui/apple", "status": "published" }
+    {
+      "id": "number_0",
+      "value": 0,
+      "nameText": "صِفْر",
+      "audio": "numbers/0",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_1",
+      "value": 1,
+      "nameText": "وَاحِد",
+      "audio": "numbers/1",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_2",
+      "value": 2,
+      "nameText": "اِثْنَان",
+      "audio": "numbers/2",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_3",
+      "value": 3,
+      "nameText": "ثَلَاثَة",
+      "audio": "numbers/3",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_4",
+      "value": 4,
+      "nameText": "أَرْبَعَة",
+      "audio": "numbers/4",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_5",
+      "value": 5,
+      "nameText": "خَمْسَة",
+      "audio": "numbers/5",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_6",
+      "value": 6,
+      "nameText": "سِتَّة",
+      "audio": "numbers/6",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_7",
+      "value": 7,
+      "nameText": "سَبْعَة",
+      "audio": "numbers/7",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_8",
+      "value": 8,
+      "nameText": "ثَمَانِيَة",
+      "audio": "numbers/8",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_9",
+      "value": 9,
+      "nameText": "تِسْعَة",
+      "audio": "numbers/9",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_10",
+      "value": 10,
+      "nameText": "عَشَرَة",
+      "audio": "numbers/10",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_11",
+      "value": 11,
+      "nameText": "أَحَدَ عَشَر",
+      "audio": "numbers/11",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_12",
+      "value": 12,
+      "nameText": "اِثْنَا عَشَر",
+      "audio": "numbers/12",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_13",
+      "value": 13,
+      "nameText": "ثَلَاثَةَ عَشَر",
+      "audio": "numbers/13",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_14",
+      "value": 14,
+      "nameText": "أَرْبَعَةَ عَشَر",
+      "audio": "numbers/14",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_15",
+      "value": 15,
+      "nameText": "خَمْسَةَ عَشَر",
+      "audio": "numbers/15",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_16",
+      "value": 16,
+      "nameText": "سِتَّةَ عَشَر",
+      "audio": "numbers/16",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_17",
+      "value": 17,
+      "nameText": "سَبْعَةَ عَشَر",
+      "audio": "numbers/17",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_18",
+      "value": 18,
+      "nameText": "ثَمَانِيَةَ عَشَر",
+      "audio": "numbers/18",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_19",
+      "value": 19,
+      "nameText": "تِسْعَةَ عَشَر",
+      "audio": "numbers/19",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_20",
+      "value": 20,
+      "nameText": "عِشْرُون",
+      "audio": "numbers/20",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_21",
+      "value": 21,
+      "nameText": "وَاحِد وَعِشْرُون",
+      "audio": "numbers/21",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_22",
+      "value": 22,
+      "nameText": "اِثْنَان وَعِشْرُون",
+      "audio": "numbers/22",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_23",
+      "value": 23,
+      "nameText": "ثَلَاثَة وَعِشْرُون",
+      "audio": "numbers/23",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_24",
+      "value": 24,
+      "nameText": "أَرْبَعَة وَعِشْرُون",
+      "audio": "numbers/24",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_25",
+      "value": 25,
+      "nameText": "خَمْسَة وَعِشْرُون",
+      "audio": "numbers/25",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_26",
+      "value": 26,
+      "nameText": "سِتَّة وَعِشْرُون",
+      "audio": "numbers/26",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_27",
+      "value": 27,
+      "nameText": "سَبْعَة وَعِشْرُون",
+      "audio": "numbers/27",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_28",
+      "value": 28,
+      "nameText": "ثَمَانِيَة وَعِشْرُون",
+      "audio": "numbers/28",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_29",
+      "value": 29,
+      "nameText": "تِسْعَة وَعِشْرُون",
+      "audio": "numbers/29",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_30",
+      "value": 30,
+      "nameText": "ثَلَاثُون",
+      "audio": "numbers/30",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_31",
+      "value": 31,
+      "nameText": "وَاحِد وَثَلَاثُون",
+      "audio": "numbers/31",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_32",
+      "value": 32,
+      "nameText": "اِثْنَان وَثَلَاثُون",
+      "audio": "numbers/32",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_33",
+      "value": 33,
+      "nameText": "ثَلَاثَة وَثَلَاثُون",
+      "audio": "numbers/33",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_34",
+      "value": 34,
+      "nameText": "أَرْبَعَة وَثَلَاثُون",
+      "audio": "numbers/34",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_35",
+      "value": 35,
+      "nameText": "خَمْسَة وَثَلَاثُون",
+      "audio": "numbers/35",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_36",
+      "value": 36,
+      "nameText": "سِتَّة وَثَلَاثُون",
+      "audio": "numbers/36",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_37",
+      "value": 37,
+      "nameText": "سَبْعَة وَثَلَاثُون",
+      "audio": "numbers/37",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_38",
+      "value": 38,
+      "nameText": "ثَمَانِيَة وَثَلَاثُون",
+      "audio": "numbers/38",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_39",
+      "value": 39,
+      "nameText": "تِسْعَة وَثَلَاثُون",
+      "audio": "numbers/39",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_40",
+      "value": 40,
+      "nameText": "أَرْبَعُون",
+      "audio": "numbers/40",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_41",
+      "value": 41,
+      "nameText": "وَاحِد وَأَرْبَعُون",
+      "audio": "numbers/41",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_42",
+      "value": 42,
+      "nameText": "اِثْنَان وَأَرْبَعُون",
+      "audio": "numbers/42",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_43",
+      "value": 43,
+      "nameText": "ثَلَاثَة وَأَرْبَعُون",
+      "audio": "numbers/43",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_44",
+      "value": 44,
+      "nameText": "أَرْبَعَة وَأَرْبَعُون",
+      "audio": "numbers/44",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_45",
+      "value": 45,
+      "nameText": "خَمْسَة وَأَرْبَعُون",
+      "audio": "numbers/45",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_46",
+      "value": 46,
+      "nameText": "سِتَّة وَأَرْبَعُون",
+      "audio": "numbers/46",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_47",
+      "value": 47,
+      "nameText": "سَبْعَة وَأَرْبَعُون",
+      "audio": "numbers/47",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_48",
+      "value": 48,
+      "nameText": "ثَمَانِيَة وَأَرْبَعُون",
+      "audio": "numbers/48",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_49",
+      "value": 49,
+      "nameText": "تِسْعَة وَأَرْبَعُون",
+      "audio": "numbers/49",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_50",
+      "value": 50,
+      "nameText": "خَمْسُون",
+      "audio": "numbers/50",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_51",
+      "value": 51,
+      "nameText": "وَاحِد وَخَمْسُون",
+      "audio": "numbers/51",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_52",
+      "value": 52,
+      "nameText": "اِثْنَان وَخَمْسُون",
+      "audio": "numbers/52",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_53",
+      "value": 53,
+      "nameText": "ثَلَاثَة وَخَمْسُون",
+      "audio": "numbers/53",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_54",
+      "value": 54,
+      "nameText": "أَرْبَعَة وَخَمْسُون",
+      "audio": "numbers/54",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_55",
+      "value": 55,
+      "nameText": "خَمْسَة وَخَمْسُون",
+      "audio": "numbers/55",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_56",
+      "value": 56,
+      "nameText": "سِتَّة وَخَمْسُون",
+      "audio": "numbers/56",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_57",
+      "value": 57,
+      "nameText": "سَبْعَة وَخَمْسُون",
+      "audio": "numbers/57",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_58",
+      "value": 58,
+      "nameText": "ثَمَانِيَة وَخَمْسُون",
+      "audio": "numbers/58",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_59",
+      "value": 59,
+      "nameText": "تِسْعَة وَخَمْسُون",
+      "audio": "numbers/59",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_60",
+      "value": 60,
+      "nameText": "سِتُّون",
+      "audio": "numbers/60",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_61",
+      "value": 61,
+      "nameText": "وَاحِد وَسِتُّون",
+      "audio": "numbers/61",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_62",
+      "value": 62,
+      "nameText": "اِثْنَان وَسِتُّون",
+      "audio": "numbers/62",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_63",
+      "value": 63,
+      "nameText": "ثَلَاثَة وَسِتُّون",
+      "audio": "numbers/63",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_64",
+      "value": 64,
+      "nameText": "أَرْبَعَة وَسِتُّون",
+      "audio": "numbers/64",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_65",
+      "value": 65,
+      "nameText": "خَمْسَة وَسِتُّون",
+      "audio": "numbers/65",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_66",
+      "value": 66,
+      "nameText": "سِتَّة وَسِتُّون",
+      "audio": "numbers/66",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_67",
+      "value": 67,
+      "nameText": "سَبْعَة وَسِتُّون",
+      "audio": "numbers/67",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_68",
+      "value": 68,
+      "nameText": "ثَمَانِيَة وَسِتُّون",
+      "audio": "numbers/68",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_69",
+      "value": 69,
+      "nameText": "تِسْعَة وَسِتُّون",
+      "audio": "numbers/69",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_70",
+      "value": 70,
+      "nameText": "سَبْعُون",
+      "audio": "numbers/70",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_71",
+      "value": 71,
+      "nameText": "وَاحِد وَسَبْعُون",
+      "audio": "numbers/71",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_72",
+      "value": 72,
+      "nameText": "اِثْنَان وَسَبْعُون",
+      "audio": "numbers/72",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_73",
+      "value": 73,
+      "nameText": "ثَلَاثَة وَسَبْعُون",
+      "audio": "numbers/73",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_74",
+      "value": 74,
+      "nameText": "أَرْبَعَة وَسَبْعُون",
+      "audio": "numbers/74",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_75",
+      "value": 75,
+      "nameText": "خَمْسَة وَسَبْعُون",
+      "audio": "numbers/75",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_76",
+      "value": 76,
+      "nameText": "سِتَّة وَسَبْعُون",
+      "audio": "numbers/76",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_77",
+      "value": 77,
+      "nameText": "سَبْعَة وَسَبْعُون",
+      "audio": "numbers/77",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_78",
+      "value": 78,
+      "nameText": "ثَمَانِيَة وَسَبْعُون",
+      "audio": "numbers/78",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_79",
+      "value": 79,
+      "nameText": "تِسْعَة وَسَبْعُون",
+      "audio": "numbers/79",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_80",
+      "value": 80,
+      "nameText": "ثَمَانُون",
+      "audio": "numbers/80",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_81",
+      "value": 81,
+      "nameText": "وَاحِد وَثَمَانُون",
+      "audio": "numbers/81",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_82",
+      "value": 82,
+      "nameText": "اِثْنَان وَثَمَانُون",
+      "audio": "numbers/82",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_83",
+      "value": 83,
+      "nameText": "ثَلَاثَة وَثَمَانُون",
+      "audio": "numbers/83",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_84",
+      "value": 84,
+      "nameText": "أَرْبَعَة وَثَمَانُون",
+      "audio": "numbers/84",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_85",
+      "value": 85,
+      "nameText": "خَمْسَة وَثَمَانُون",
+      "audio": "numbers/85",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_86",
+      "value": 86,
+      "nameText": "سِتَّة وَثَمَانُون",
+      "audio": "numbers/86",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_87",
+      "value": 87,
+      "nameText": "سَبْعَة وَثَمَانُون",
+      "audio": "numbers/87",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_88",
+      "value": 88,
+      "nameText": "ثَمَانِيَة وَثَمَانُون",
+      "audio": "numbers/88",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_89",
+      "value": 89,
+      "nameText": "تِسْعَة وَثَمَانُون",
+      "audio": "numbers/89",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_90",
+      "value": 90,
+      "nameText": "تِسْعُون",
+      "audio": "numbers/90",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_91",
+      "value": 91,
+      "nameText": "وَاحِد وَتِسْعُون",
+      "audio": "numbers/91",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_92",
+      "value": 92,
+      "nameText": "اِثْنَان وَتِسْعُون",
+      "audio": "numbers/92",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_93",
+      "value": 93,
+      "nameText": "ثَلَاثَة وَتِسْعُون",
+      "audio": "numbers/93",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_94",
+      "value": 94,
+      "nameText": "أَرْبَعَة وَتِسْعُون",
+      "audio": "numbers/94",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_95",
+      "value": 95,
+      "nameText": "خَمْسَة وَتِسْعُون",
+      "audio": "numbers/95",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_96",
+      "value": 96,
+      "nameText": "سِتَّة وَتِسْعُون",
+      "audio": "numbers/96",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_97",
+      "value": 97,
+      "nameText": "سَبْعَة وَتِسْعُون",
+      "audio": "numbers/97",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_98",
+      "value": 98,
+      "nameText": "ثَمَانِيَة وَتِسْعُون",
+      "audio": "numbers/98",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_99",
+      "value": 99,
+      "nameText": "تِسْعَة وَتِسْعُون",
+      "audio": "numbers/99",
+      "objectImage": "ui/apple",
+      "status": "published"
+    },
+    {
+      "id": "number_100",
+      "value": 100,
+      "nameText": "مِائَة",
+      "audio": "numbers/100",
+      "objectImage": "ui/apple",
+      "status": "published"
+    }
   ]
 }

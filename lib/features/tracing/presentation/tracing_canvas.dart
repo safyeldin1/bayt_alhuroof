@@ -96,13 +96,6 @@ class _TracePainter extends CustomPainter {
       ..strokeWidth = 20
       ..strokeCap = StrokeCap.round;
 
-    // رسم التقدم (الأخضر)
-    final progressPaint = Paint()
-      ..color = Colors.green
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 20
-      ..strokeCap = StrokeCap.round;
-
     for (var i = 0; i < paths.length; i++) {
       if (trace.strokes[i].type == 'path') {
         canvas.drawPath(paths[i], guidePaint);

@@ -1,5 +1,5 @@
 # 💻 كود المشروع الكامل
-> آخر تحديث: 2026-11-04 18:09:29
+> آخر تحديث: 2026-11-04 20:30:08
 ```yaml
 name: bayt_alhuroof
 description: "A new Flutter project."
@@ -309,51 +309,82 @@ class AudioService {
 ```
 ## 📄 `lib/core/router/app_router.dart`
 ```dart
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../features/splash/splash_screen.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/letters/presentation/letters_screen.dart';
 import '../../features/letters/presentation/letter_lesson_screen.dart';
 import '../../features/games/presentation/choice_games.dart';
+import '../../features/games/presentation/drag_match_game.dart';
+import '../../features/games/presentation/counting_game.dart';
+import '../../features/games/presentation/colors_shapes_games.dart';
+import '../../features/games/presentation/shape_shadow_game.dart';
+import '../../features/games/presentation/letter_shadow_game.dart';
 import '../../features/tracing/presentation/tracing_screen.dart';
 import '../../features/numbers/presentation/numbers_screen.dart';
 import '../../features/numbers/presentation/number_lesson_screen.dart';
 import '../../features/parent_zone/parent_gate_screen.dart';
 import '../../features/parent_zone/parent_screen.dart';
+import '../../features/rewards/presentation/rewards_screen.dart';
+import '../../features/colors/presentation/colors_screen.dart';
+import '../../features/shapes/presentation/shapes_screen.dart';
+import '../../features/coloring/presentation/coloring_gallery.dart';
+import '../../features/about/about_screen.dart';
 import '../../providers/parent_providers.dart';
+
+// === ملفات المهن ===
+import '../../features/games/presentation/professions_menu.dart';
+import '../../features/games/presentation/professions_choice_game.dart';
+import '../../features/games/presentation/professions_drag_game.dart';
+import '../../features/games/presentation/professions_learn.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/splash',
     routes: [
+      GoRoute(path: '/splash', builder: (c, s) => const SplashScreen()),
       GoRoute(path: '/', builder: (c, s) => const HomeScreen()),
+      
+      // الحروف
       GoRoute(path: '/letters', builder: (c, s) => const LettersScreen()),
-      GoRoute(
-        path: '/letters/:id',
-        builder: (c, s) => LetterLessonScreen(letterId: s.pathParameters['id']!),
-      ),
-      GoRoute(
-        path: '/letters/:id/recognize',
-        builder: (c, s) => RecognizeLetterGame(letterId: s.pathParameters['id']!),
-      ),
-      GoRoute(
-        path: '/letters/:id/match',
-        builder: (c, s) => MatchImageGame(letterId: s.pathParameters['id']!),
-      ),
-      GoRoute(
-        path: '/letters/:id/trace',
-        builder: (c, s) => TracingScreen(letterId: s.pathParameters['id']!),
-      ),
+      GoRoute(path: '/letters/shadow_game', builder: (c, s) => const LetterShadowGame()),
+      GoRoute(path: '/letters/:id', builder: (c, s) => LetterLessonScreen(letterId: s.pathParameters['id']!)),
+      GoRoute(path: '/letters/:id/recognize', builder: (c, s) => RecognizeLetterGame(letterId: s.pathParameters['id']!)),
+      GoRoute(path: '/letters/:id/match', builder: (c, s) => MatchImageGame(letterId: s.pathParameters['id']!)),
+      GoRoute(path: '/letters/:id/drag', builder: (c, s) => DragMatchGame(letterId: s.pathParameters['id']!)),
+      GoRoute(path: '/letters/:id/trace', builder: (c, s) => TracingScreen(letterId: s.pathParameters['id']!)),
+      
+      // الأرقام
       GoRoute(path: '/numbers', builder: (c, s) => const NumbersScreen()),
-      GoRoute(
-        path: '/numbers/:id',
-        builder: (c, s) => NumberLessonScreen(numberId: s.pathParameters['id']!),
-      ),
-      GoRoute(
-        path: '/numbers/:id/pick',
-        builder: (c, s) => PickNumberGame(numberId: s.pathParameters['id']!),
-      ),
+      GoRoute(path: '/numbers/:id', builder: (c, s) => NumberLessonScreen(numberId: s.pathParameters['id']!)),
+      GoRoute(path: '/numbers/:id/pick', builder: (c, s) => PickNumberGame(numberId: s.pathParameters['id']!)),
+      GoRoute(path: '/numbers/:id/count_game', builder: (c, s) => CountingGame(numberId: s.pathParameters['id']!)),
+      
+      // الألوان والأشكال
+      GoRoute(path: '/colors', builder: (c, s) => const ColorsScreen()),
+      GoRoute(path: '/colors/game', builder: (c, s) => const ColorGame()),
+      GoRoute(path: '/shapes', builder: (c, s) => const ShapesScreen()),
+      GoRoute(path: '/shapes/game', builder: (c, s) => const ShapeGame()),
+      GoRoute(path: '/shapes/shadow_game', builder: (c, s) => const ShapeShadowGame()),
+      
+      // التلوين
+      GoRoute(path: '/coloring', builder: (c, s) => const ColoringGallery()),
+      
+      // المهن (الـ 4 مسارات)
+      GoRoute(path: '/professions', builder: (c, s) => const ProfessionsMenu()),
+      GoRoute(path: '/professions/learn', builder: (c, s) => const ProfessionsLearn()),
+      GoRoute(path: '/professions/choice', builder: (c, s) => const ProfessionsChoiceGame()),
+      GoRoute(path: '/professions/drag', builder: (c, s) => const ProfessionsDragGame()),
+      
+      // حول التطبيق
+      GoRoute(path: '/about', builder: (c, s) => const AboutScreen()),
+      
+      // المكافآت
+      GoRoute(path: '/rewards', builder: (c, s) => const RewardsScreen()),
+      
+      // ولي الأمر
       GoRoute(path: '/parent-gate', builder: (c, s) => const ParentGateScreen()),
       GoRoute(
         path: '/parent',
@@ -488,7 +519,7 @@ class _AnimatedImageState extends State<AnimatedImage> with SingleTickerProvider
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.orange.withOpacity(0.4),
+                    color: Colors.orange.withValues(alpha: 0.4),
                     blurRadius: 25,
                     spreadRadius: 5,
                   )
@@ -2112,6 +2143,20 @@ class $AppDatabaseManager {
       $$ActivityResultsTableTableManager(_db, _db.activityResults);
 }
 ```
+## 📄 `lib/data/models/color_item.dart`
+```dart
+import 'package:flutter/material.dart';
+
+class ColorItem {
+  const ColorItem({required this.id, required this.name, required this.hexColor, required this.emoji});
+  final String id;
+  final String name;
+  final String hexColor;
+  final String emoji;
+
+  Color get color => Color(int.parse(hexColor.replaceFirst('#', '0xFF')));
+}
+```
 ## 📄 `lib/data/models/letter.dart`
 ```dart
 class Letter {
@@ -2176,9 +2221,49 @@ class NumberItem {
       );
 }
 ```
+## 📄 `lib/data/models/profession_item.dart`
+```dart
+class ProfessionItem {
+  const ProfessionItem({
+    required this.id,
+    required this.name,
+    required this.emoji,
+    required this.toolId,
+  });
+
+  final String id;
+  final String name;
+  final String emoji;
+  final String toolId;
+}
+
+class ToolItem {
+  const ToolItem({
+    required this.id,
+    required this.name,
+    required this.emoji,
+  });
+
+  final String id;
+  final String name;
+  final String emoji;
+}
+```
+## 📄 `lib/data/models/shape_item.dart`
+```dart
+
+enum ShapeType { triangle, square, rectangle, circle, diamond }
+
+class ShapeItem {
+  const ShapeItem({required this.id, required this.name, required this.type, required this.emoji});
+  final String id;
+  final String name;
+  final ShapeType type;
+  final String emoji;
+}
+```
 ## 📄 `lib/data/models/tracing_path.dart`
 ```dart
-import 'package:flutter/material.dart';
 
 class TraceStroke {
   const TraceStroke({
@@ -2311,6 +2396,524 @@ class ProgressRepository {
     return _db.select(_db.itemProgress).watch().map(
           (rows) => {for (final r in rows) r.contentId: r.bestStars},
         );
+  }
+}
+```
+## 📄 `lib/features/about/about_screen.dart`
+```dart
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../core/widgets/kids_background.dart';
+import '../../core/animations/bounce_in.dart';
+
+class AboutScreen extends StatelessWidget {
+  const AboutScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
+              title: const Text('حول التطبيق', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+              centerTitle: true,
+            ),
+            Expanded(
+              child: Center(
+                child: BounceIn(
+                  child: Container(
+                    margin: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(32),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(40),
+                      boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, 10))],
+                    ),
+                    child: const Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.school, size: 100, color: Colors.orange),
+                        SizedBox(height: 16),
+                        Text('أول خطوة', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                        SizedBox(height: 8),
+                        Text('الإصدار 1.0.0', style: TextStyle(fontSize: 16, color: Colors.grey)),
+                        SizedBox(height: 24),
+                        Divider(),
+                        SizedBox(height: 16),
+                        Text('تطبيق تعليمي للأطفال لتعلم الحروف والأرقام والألوان والأشكال والمهن.', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+                        SizedBox(height: 24),
+                        Text('Powered by Safyeldin Abdo © Ghinax', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+## 📄 `lib/features/coloring/presentation/coloring_gallery.dart`
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/widgets/kids_background.dart';
+import '../../../core/widgets/kids_button.dart';
+import '../../../providers/audio_providers.dart';
+import 'coloring_screen.dart';
+import 'coloring_shapes.dart';
+
+class ColoringGallery extends ConsumerWidget {
+  const ColoringGallery({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(audioServiceProvider).playVoice('instructions/coloring');
+    });
+
+    final templates = ColoringShapes.all();
+
+    return Scaffold(
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
+              title: const Text('التلوين', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+              centerTitle: true,
+            ),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  int crossAxisCount = constraints.maxWidth > 900 ? 4 : (constraints.maxWidth > 500 ? 3 : 2);
+                  return GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: 1.0,
+                    ),
+                    itemCount: templates.length + 1,
+                    itemBuilder: (context, i) {
+                      if (i == templates.length) {
+                        return KidsButton(
+                          color: Colors.white,
+                          onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => const ColoringScreen(title: 'رسم حر', shapeWidget: null),
+                          )),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(Icons.brush, size: 80, color: Colors.purple),
+                              SizedBox(height: 12),
+                              Text('رسم حر', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.purple)),
+                            ],
+                          ),
+                        );
+                      }
+                      final template = templates[i];
+                      return KidsButton(
+                        color: Colors.white,
+                        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => ColoringScreen(title: template.name, shapeWidget: template.painter()),
+                        )),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(template.icon, size: 80, color: template.themeColor),
+                            const SizedBox(height: 12),
+                            Text(template.name, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: template.themeColor)),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+## 📄 `lib/features/coloring/presentation/coloring_screen.dart`
+```dart
+import 'dart:ui';
+import 'package:flutter/material.dart';
+
+class ColoringScreen extends StatefulWidget {
+  final String title;
+  final Widget? shapeWidget;
+  const ColoringScreen({super.key, required this.title, this.shapeWidget});
+
+  @override
+  State<ColoringScreen> createState() => _ColoringScreenState();
+}
+
+class _ColoringScreenState extends State<ColoringScreen> {
+  Color _selectedColor = Colors.red;
+  final List<DrawnLine> _lines = [];
+  DrawnLine? _currentLine;
+
+  final List<Color> _palette = [
+    Colors.red, Colors.blue, Colors.green, Colors.yellow, Colors.orange,
+    Colors.purple, Colors.pink, Colors.brown, Colors.black, Colors.white,
+  ];
+
+  void _clearCanvas() {
+    setState(() {
+      _lines.clear();
+      _currentLine = null;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'لوحة جديدة',
+            onPressed: () {
+              setState(() {
+                _lines.clear();
+              });
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete),
+            tooltip: 'مسح التلوين',
+            onPressed: _clearCanvas,
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: Container(
+              color: Colors.white,
+              child: GestureDetector(
+                onPanStart: (details) {
+                  setState(() {
+                    _currentLine = DrawnLine([details.localPosition], _selectedColor, 15.0);
+                    _lines.add(_currentLine!);
+                  });
+                },
+                onPanUpdate: (details) {
+                  setState(() {
+                    _currentLine?.path.add(details.localPosition);
+                  });
+                },
+                onPanEnd: (details) {
+                  setState(() {
+                    _currentLine = null;
+                  });
+                },
+                child: Stack(
+                  children: [
+                    if (widget.shapeWidget != null) Positioned.fill(child: widget.shapeWidget!),
+                    Positioned.fill(child: CustomPaint(painter: _DrawingPainter(_lines))),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Container(
+            height: 90,
+            color: Colors.grey.shade200,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.all(16),
+              itemCount: _palette.length,
+              itemBuilder: (context, i) {
+                final color = _palette[i];
+                final isSelected = color == _selectedColor;
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedColor = color),
+                  child: Container(
+                    width: 60, height: 60,
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: isSelected ? Colors.black : Colors.grey.shade400, width: isSelected ? 5 : 2),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class DrawnLine {
+  DrawnLine(this.path, this.color, this.width);
+  final List<Offset> path;
+  final Color color;
+  final double width;
+}
+
+class _DrawingPainter extends CustomPainter {
+  _DrawingPainter(this.lines);
+  final List<DrawnLine> lines;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (var line in lines) {
+      final paint = Paint()
+        ..color = line.color
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = line.width
+        ..style = PaintingStyle.stroke;
+      
+      if (line.path.length < 2) {
+        canvas.drawPoints(PointMode.points, line.path, paint);
+      } else {
+        final path = Path()..moveTo(line.path[0].dx, line.path[0].dy);
+        for (var i = 1; i < line.path.length; i++) {
+          path.lineTo(line.path[i].dx, line.path[i].dy);
+        }
+        canvas.drawPath(path, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+```
+## 📄 `lib/features/coloring/presentation/coloring_shapes.dart`
+```dart
+import 'package:flutter/material.dart';
+
+// كل رسمة عبارة عن Path ومجموعة من الألوان اللي الطفل ممكن يستخدمها
+class ColoringTemplate {
+  final String id;
+  final String name;
+  final IconData icon;
+  final Color themeColor;
+  final Widget Function() painter;
+
+  const ColoringTemplate({
+    required this.id, required this.name, required this.icon,
+    required this.themeColor, required this.painter,
+  });
+}
+
+class ColoringShapes {
+  static List<ColoringTemplate> all() {
+    return [
+      ColoringTemplate(id: 'tree', name: 'شجرة', icon: Icons.park, themeColor: Colors.green, painter: () => const TreeShape()),
+      ColoringTemplate(id: 'house', name: 'بيت', icon: Icons.home, themeColor: Colors.orange, painter: () => const HouseShape()),
+      ColoringTemplate(id: 'cat', name: 'قطة', icon: Icons.pets, themeColor: Colors.pink, painter: () => const CatShape()),
+      ColoringTemplate(id: 'dog', name: 'كلب', icon: Icons.pets, themeColor: Colors.brown, painter: () => const DogShape()),
+      ColoringTemplate(id: 'fish', name: 'سمكة', icon: Icons.water, themeColor: Colors.blue, painter: () => const FishShape()),
+      ColoringTemplate(id: 'butterfly', name: 'فراشة', icon: Icons.bug_report, themeColor: Colors.purple, painter: () => const ButterflyShape()),
+      ColoringTemplate(id: 'car', name: 'سيارة', icon: Icons.directions_car, themeColor: Colors.red, painter: () => const CarShape()),
+      ColoringTemplate(id: 'sun', name: 'شمس', icon: Icons.wb_sunny, themeColor: Colors.amber, painter: () => const SunShape()),
+      ColoringTemplate(id: 'flower', name: 'زهرة', icon: Icons.local_florist, themeColor: Colors.pinkAccent, painter: () => const FlowerShape()),
+      ColoringTemplate(id: 'star', name: 'نجمة', icon: Icons.star, themeColor: Colors.amber, painter: () => const StarShape()),
+    ];
+  }
+}
+
+// --- رسومات الـ Outline (أبيض وأسود) ---
+
+class TreeShape extends StatelessWidget {
+  const TreeShape({super.key});
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Icon(Icons.park_outlined, size: 400, color: Colors.grey.shade300),
+  );
+}
+
+class HouseShape extends StatelessWidget {
+  const HouseShape({super.key});
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Icon(Icons.house_outlined, size: 400, color: Colors.grey.shade300),
+  );
+}
+
+class CatShape extends StatelessWidget {
+  const CatShape({super.key});
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Icon(Icons.pets_outlined, size: 400, color: Colors.grey.shade300),
+  );
+}
+
+class DogShape extends StatelessWidget {
+  const DogShape({super.key});
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Icon(Icons.pets_outlined, size: 400, color: Colors.grey.shade300), // مؤقتاً
+  );
+}
+
+class FishShape extends StatelessWidget {
+  const FishShape({super.key});
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Icon(Icons.water_outlined, size: 400, color: Colors.grey.shade300),
+  );
+}
+
+class ButterflyShape extends StatelessWidget {
+  const ButterflyShape({super.key});
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Icon(Icons.bug_report_outlined, size: 400, color: Colors.grey.shade300),
+  );
+}
+
+class CarShape extends StatelessWidget {
+  const CarShape({super.key});
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Icon(Icons.directions_car_outlined, size: 400, color: Colors.grey.shade300),
+  );
+}
+
+class SunShape extends StatelessWidget {
+  const SunShape({super.key});
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Icon(Icons.wb_sunny_outlined, size: 400, color: Colors.grey.shade300),
+  );
+}
+
+class FlowerShape extends StatelessWidget {
+  const FlowerShape({super.key});
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Icon(Icons.local_florist_outlined, size: 400, color: Colors.grey.shade300),
+  );
+}
+
+class StarShape extends StatelessWidget {
+  const StarShape({super.key});
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Icon(Icons.star_outline, size: 400, color: Colors.grey.shade300),
+  );
+}
+```
+## 📄 `lib/features/colors/presentation/colors_screen.dart`
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/widgets/kids_background.dart';
+import '../../../core/animations/bounce_in.dart';
+import '../../../data/models/color_item.dart';
+import '../../../providers/audio_providers.dart';
+
+class ColorsScreen extends ConsumerWidget {
+  const ColorsScreen({super.key});
+
+  static const List<ColorItem> colors = [
+    ColorItem(id: 'red', name: 'أَحْمَر', hexColor: '#F44336', emoji: '🍎'),
+    ColorItem(id: 'blue', name: 'أَزْرَق', hexColor: '#2196F3', emoji: '🌊'),
+    ColorItem(id: 'yellow', name: 'أَصْفَر', hexColor: '#FFEB3B', emoji: '🌞'),
+    ColorItem(id: 'green', name: 'أَخْضَر', hexColor: '#4CAF50', emoji: '🌿'),
+    ColorItem(id: 'orange', name: 'بُرْتُقَالِي', hexColor: '#FF9800', emoji: '🍊'),
+    ColorItem(id: 'purple', name: 'بَنَفْسَجِي', hexColor: '#9C27B0', emoji: '🍇'),
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(audioServiceProvider).playVoice('instructions/colors');
+    });
+
+    return Scaffold(
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
+              title: const Text('الألوان', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+              centerTitle: true,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: double.infinity, height: 60,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(backgroundColor: Colors.purple.shade400),
+                  onPressed: () => context.push('/colors/game'),
+                  icon: const Icon(Icons.videogame_asset, color: Colors.white),
+                  label: const Text('العب لعبة الألوان', style: TextStyle(fontSize: 22, color: Colors.white)),
+                ),
+              ),
+            ),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  int crossAxisCount = constraints.maxWidth > 600 ? 4 : 2;
+                  return GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: 1.0,
+                    ),
+                    itemCount: colors.length,
+                    itemBuilder: (context, i) {
+                      final c = colors[i];
+                      return BounceIn(
+                        child: GestureDetector(
+                          onTap: () => ref.read(audioServiceProvider).playVoice('colors/${c.id}', force: true),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: c.color,
+                              borderRadius: BorderRadius.circular(30),
+                              boxShadow: [BoxShadow(color: c.color.withValues(alpha: 0.6), blurRadius: 15, offset: const Offset(0, 8))],
+                              border: Border.all(color: Colors.white, width: 4),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(c.emoji, style: const TextStyle(fontSize: 60)),
+                                const SizedBox(height: 8),
+                                Text(c.name, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: c.id == 'yellow' ? Colors.black87 : Colors.white)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 ```
@@ -2754,6 +3357,1533 @@ class MatchImageGame extends StatelessWidget {
       );
 }
 ```
+## 📄 `lib/features/games/presentation/colors_shapes_games.dart`
+```dart
+import 'package:flutter/material.dart';
+import '../../../data/models/color_item.dart';
+import '../../../data/models/shape_item.dart';
+import '../../colors/presentation/colors_screen.dart';
+import '../../shapes/presentation/shapes_screen.dart';
+import '../domain/engines/choice_engine.dart';
+import 'choice_game_screen.dart';
+
+class ColorGame extends StatelessWidget {
+  const ColorGame({super.key});
+
+  @override
+  Widget build(BuildContext context) => ChoiceGameScreen<ColorItem>(
+        activityId: 'color_game',
+        contentId: 'colors',
+        kind: 'color',
+        backRoute: '/colors',
+        idOf: (c) => c.id,
+        setup: (ref) async {
+          final targets = ColorsScreen.colors.toList()..shuffle();
+          return ChoiceGameSetup(
+            instructionText: 'اختر اللون الصحيح',
+            questions: ChoiceEngine<ColorItem>((c) => c.id).build(
+              targets: targets,
+              pool: ColorsScreen.colors,
+              promptAudioFor: (c) => 'colors/${c.id}',
+            ),
+          );
+        },
+        optionBuilder: (ctx, ref, c) => Container(
+          decoration: BoxDecoration(color: c.color, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 4)),
+          child: Center(child: Text(c.emoji, style: const TextStyle(fontSize: 40))),
+        ),
+      );
+}
+
+class ShapeGame extends StatelessWidget {
+  const ShapeGame({super.key});
+
+  @override
+  Widget build(BuildContext context) => ChoiceGameScreen<ShapeItem>(
+        activityId: 'shape_game',
+        contentId: 'shapes',
+        kind: 'shape',
+        backRoute: '/shapes',
+        idOf: (s) => s.id,
+        setup: (ref) async {
+          final targets = ShapesScreen.shapes.toList()..shuffle();
+          return ChoiceGameSetup(
+            instructionText: 'اختر الشكل الصحيح',
+            questions: ChoiceEngine<ShapeItem>((s) => s.id).build(
+              targets: targets,
+              pool: ShapesScreen.shapes,
+              promptAudioFor: (s) => 'shapes/${s.id}',
+            ),
+          );
+        },
+        optionBuilder: (ctx, ref, s) => SizedBox(
+          width: 80, height: 80,
+          child: CustomPaint(painter: ShapePainter(s.type, Colors.blue.shade400)),
+        ),
+      );
+}
+```
+## 📄 `lib/features/games/presentation/counting_game.dart`
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../data/models/number_item.dart';
+import '../../../providers/audio_providers.dart';
+import '../../../providers/content_providers.dart';
+import '../../../providers/progress_providers.dart';
+import '../../../core/widgets/kids_background.dart';
+import '../../../core/animations/star_burst.dart';
+import '../../../core/settings/app_settings.dart';
+import '../../../core/utils/arabic_numbers.dart';
+
+class CountingGame extends ConsumerStatefulWidget {
+  const CountingGame({super.key, required this.numberId});
+  final String numberId;
+
+  @override
+  ConsumerState<CountingGame> createState() => _CountingGameState();
+}
+
+class _CountingGameState extends ConsumerState<CountingGame> {
+  NumberItem? _number;
+  Set<int> _counted = {};
+  bool _isLoading = true;
+  bool _isFinished = false;
+  int _wrongAttempts = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _initGame();
+  }
+
+  Future<void> _initGame() async {
+    final repo = await ref.read(contentRepositoryProvider.future);
+    final n = repo.numberById(widget.numberId);
+    if (n != null) {
+      setState(() {
+        _number = n;
+        _counted = {};
+        _isLoading = false;
+        _isFinished = false;
+        _wrongAttempts = 0;
+      });
+      ref.read(audioServiceProvider).playVoice(n.audio, force: true);
+    }
+  }
+
+  void _onTapObject(int index) {
+    if (_isFinished) return;
+    if (_counted.contains(index)) return;
+
+    setState(() {
+      _counted.add(index);
+    });
+
+    // تشغيل صوت الرقم اللي اتعد
+    final repo = ref.read(contentRepositoryProvider).valueOrNull;
+    if (repo != null) {
+      final spokenNumber = repo.numberByValue(_counted.length);
+      if (spokenNumber != null) {
+        ref.read(audioServiceProvider).playVoice(spokenNumber.audio, force: true);
+      }
+    }
+
+    // لو خلص العد
+    if (_counted.length == _number!.value) {
+      setState(() => _isFinished = true);
+      ref.read(progressRepositoryProvider).recordResult(
+        activityId: 'count_game_${_number!.id}',
+        contentId: _number!.id,
+        kind: 'number',
+        attempts: _number!.value + _wrongAttempts,
+        correct: _number!.value,
+        stars: 3,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 36, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go('/numbers/${widget.numberId}')),
+              title: const Text('عُدَّ العناصر', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+              centerTitle: true,
+            ),
+            Expanded(
+              child: _isLoading 
+                ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                : _isFinished
+                  ? _buildResult()
+                  : _buildGameBoard(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGameBoard() {
+    final style = ref.watch(settingsProvider).numeralStyle;
+    final targetCount = _number!.value;
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // الرقم المطلوب
+          Container(
+            width: 120, height: 120,
+            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)]),
+            child: Center(
+              child: Text(formatNumber(targetCount, style), style: const TextStyle(fontSize: 70, fontWeight: FontWeight.bold, color: Color(0xFF29B6F6))),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text('اضغط على $targetCount عناصر', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+          const SizedBox(height: 24),
+          
+          // العناصر
+          Expanded(
+            child: SingleChildScrollView(
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  // هنعرض عناصر أكتر من الرقم عشان الطفل يعد بنفسه
+                  for (var i = 0; i < targetCount + 3; i++)
+                    GestureDetector(
+                      onTap: () => _onTapObject(i),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: 80, height: 80,
+                        decoration: BoxDecoration(
+                          color: _counted.contains(i) ? Colors.green.shade100 : Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: _counted.contains(i) ? Colors.green : Colors.grey.shade300, width: 4),
+                          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
+                        ),
+                        child: Center(
+                          child: Text(_counted.contains(i) ? '✅' : '🍎', style: const TextStyle(fontSize: 40)),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResult() {
+    final style = ref.watch(settingsProvider).numeralStyle;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const StarBurst(stars: 3),
+          const SizedBox(height: 16),
+          Text('أحسنت! لقد عددت ${formatNumber(_number!.value, style)} بشكل صحيح', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+          const SizedBox(height: 32),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton.filled(iconSize: 64, onPressed: _initGame, icon: const Icon(Icons.replay)),
+              const SizedBox(width: 32),
+              IconButton.filled(iconSize: 64, onPressed: () => context.go('/numbers/${widget.numberId}'), icon: const Icon(Icons.check)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+## 📄 `lib/features/games/presentation/drag_match_game.dart`
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../data/models/letter.dart';
+import '../../../data/models/word.dart';
+import '../../../providers/audio_providers.dart';
+import '../../../providers/content_providers.dart';
+import '../../../providers/progress_providers.dart';
+import '../../../core/widgets/kids_background.dart';
+import '../../../core/animations/star_burst.dart';
+
+class DragMatchGame extends ConsumerStatefulWidget {
+  const DragMatchGame({super.key, required this.letterId});
+  final String letterId;
+
+  @override
+  ConsumerState<DragMatchGame> createState() => _DragMatchGameState();
+}
+
+class _DragMatchGameState extends ConsumerState<DragMatchGame> {
+  List<Word> _words = [];
+  List<Letter> _options = [];
+  Map<String, bool> _matched = {};
+  bool _isLoading = true;
+  bool _isFinished = false;
+  int _wrongAttempts = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _initGame();
+  }
+
+  Future<void> _initGame() async {
+    final repo = await ref.read(contentRepositoryProvider.future);
+    // جلب 3 كلمات عشوائية (شاملة كلمة الحرف الحالي)
+    final targetLetter = repo.letterById(widget.letterId);
+    if (targetLetter == null) return;
+
+    final targetWord = repo.wordById(targetLetter.primaryWordId);
+    if (targetWord == null) return;
+
+    // جلب كلمتين إضافيتين من حروف أخرى
+    final otherWords = repo.words.where((w) => w.id != targetWord.id).toList()..shuffle();
+    final selectedWords = [targetWord, ...otherWords.take(2)];
+
+    // جلب الحروف المطابقة
+    final selectedLetters = selectedWords.map((w) => repo.letterById(w.startsWithLetterId)!).toList()..shuffle();
+
+    setState(() {
+      _words = selectedWords..shuffle();
+      _options = selectedLetters;
+      _matched = {for (var w in _words) w.id: false};
+      _isLoading = false;
+    });
+  }
+
+  void _onDragAccepted(Word word, Letter letter) {
+    if (word.startsWithLetterId == letter.id) {
+      // إجابة صحيحة
+      setState(() {
+        _matched[word.id] = true;
+      });
+      ref.read(audioServiceProvider).playVoice(letter.soundAudio, force: true);
+      
+      // التحقق من الفوز
+      if (_matched.values.every((v) => v == true)) {
+        setState(() => _isFinished = true);
+        ref.read(progressRepositoryProvider).recordResult(
+          activityId: 'drag_match_${widget.letterId}',
+          contentId: widget.letterId,
+          kind: 'letter',
+          attempts: 3 + _wrongAttempts,
+          correct: 3,
+          stars: _wrongAttempts == 0 ? 3 : (_wrongAttempts <= 2 ? 2 : 1),
+        );
+      }
+    } else {
+      // إجابة خاطئة
+      setState(() => _wrongAttempts++);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('حاول مرة أخرى!'), duration: Duration(milliseconds: 500)),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 36, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go('/letters/${widget.letterId}')),
+              title: const Text('اسحب الحرف للصورة الصح', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              centerTitle: true,
+            ),
+            Expanded(
+              child: _isLoading 
+                ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                : _isFinished
+                  ? _buildResult()
+                  : _buildGameBoard(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGameBoard() {
+    return Column(
+      children: [
+        const SizedBox(height: 20),
+        // منطقة الصور (أهداف السحب)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: _words.map((word) {
+            final isMatched = _matched[word.id] ?? false;
+            return DragTarget<Letter>(
+              onAcceptWithDetails: (details) => _onDragAccepted(word, details.data),
+              builder: (context, candidateData, rejectedData) {
+                return Container(
+                  width: 100,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: isMatched ? Colors.green.shade100 : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: isMatched ? Colors.green : Colors.grey.shade300, width: 3),
+                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(word.emoji, style: const TextStyle(fontSize: 50)),
+                      Text(word.text, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                      if (isMatched) const Icon(Icons.check_circle, color: Colors.green, size: 24),
+                    ],
+                  ),
+                );
+              },
+            );
+          }).toList(),
+        ),
+        const Spacer(),
+        // منطقة الحروف (الأشياء اللي بتتسحب)
+        Wrap(
+          spacing: 20,
+          runSpacing: 20,
+          alignment: WrapAlignment.center,
+          children: _options.map((letter) {
+            // لو الحرف ده اتسحب صح، نخفيه
+            final isUsed = _words.any((w) => w.startsWithLetterId == letter.id && _matched[w.id] == true);
+            if (isUsed) return const SizedBox(width: 80, height: 80); // مساحة فاضية عشان التصميم ميبوظش
+
+            return Draggable<Letter>(
+              data: letter,
+              feedback: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(color: Colors.orange.shade400, borderRadius: BorderRadius.circular(20)),
+                  child: Center(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white))),
+                ),
+              ),
+              childWhenDragging: Opacity(
+                opacity: 0.3,
+                child: Container(
+                  width: 80, height: 80,
+                  decoration: BoxDecoration(color: Colors.orange.shade400, borderRadius: BorderRadius.circular(20)),
+                  child: Center(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white))),
+                ),
+              ),
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade400,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))],
+                ),
+                child: Center(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white))),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 80),
+      ],
+    );
+  }
+
+  Widget _buildResult() {
+    final stars = _wrongAttempts == 0 ? 3 : (_wrongAttempts <= 2 ? 2 : 1);
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          StarBurst(stars: stars),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var i = 0; i < stars; i++)
+                const Icon(Icons.star, size: 80, color: Colors.amber),
+            ],
+          ),
+          const SizedBox(height: 32),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton.filled(iconSize: 64, onPressed: () { setState(() { _isLoading = true; _isFinished = false; _wrongAttempts = 0; }); _initGame(); }, icon: const Icon(Icons.replay)),
+              const SizedBox(width: 32),
+              IconButton.filled(iconSize: 64, onPressed: () => context.go('/letters/${widget.letterId}'), icon: const Icon(Icons.check)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+## 📄 `lib/features/games/presentation/letter_shadow_game.dart`
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../data/models/letter.dart';
+import '../../../providers/audio_providers.dart';
+import '../../../providers/content_providers.dart';
+import '../../../providers/progress_providers.dart';
+import '../../../core/widgets/kids_background.dart';
+import '../../../core/animations/star_burst.dart';
+
+class LetterShadowGame extends ConsumerStatefulWidget {
+  const LetterShadowGame({super.key});
+
+  @override
+  ConsumerState<LetterShadowGame> createState() => _LetterShadowGameState();
+}
+
+class _LetterShadowGameState extends ConsumerState<LetterShadowGame> {
+  List<Letter> _targetLetters = [];
+  List<Letter> _options = [];
+  Map<String, bool> _matched = {};
+  bool _isLoading = true;
+  bool _isFinished = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initGame();
+  }
+
+  Future<void> _initGame() async {
+    final repo = await ref.read(contentRepositoryProvider.future);
+    final allLetters = repo.letters.toList()..shuffle();
+    final selected = allLetters.take(3).toList();
+
+    setState(() {
+      _targetLetters = selected;
+      _options = selected.toList()..shuffle();
+      _matched = {for (var l in selected) l.id: false};
+      _isLoading = false;
+      _isFinished = false;
+    });
+  }
+
+  void _onDragAccepted(String shadowId, Letter draggedLetter) {
+    if (shadowId == draggedLetter.id) {
+      setState(() => _matched[shadowId] = true);
+      ref.read(audioServiceProvider).playVoice(draggedLetter.soundAudio, force: true);
+
+      if (_matched.values.every((v) => v == true)) {
+        setState(() => _isFinished = true);
+        ref.read(progressRepositoryProvider).recordResult(
+          activityId: 'letter_shadow_game',
+          contentId: 'letters',
+          kind: 'letter',
+          attempts: 3,
+          correct: 3,
+          stars: 3,
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('حاول مرة أخرى!'), duration: Duration(milliseconds: 500)),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 36, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go('/letters')),
+              title: const Text('طابق الحروف', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+              centerTitle: true,
+            ),
+            Expanded(
+              child: _isLoading 
+                ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                : _isFinished 
+                  ? _buildResult() 
+                  : _buildGameBoard(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGameBoard() {
+    return Column(
+      children: [
+        const SizedBox(height: 20),
+        const Text('اسحب الحرف وضعه على ظله', style: TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: _targetLetters.map((letter) {
+            final isMatched = _matched[letter.id] ?? false;
+            return DragTarget<Letter>(
+              onAcceptWithDetails: (details) => _onDragAccepted(letter.id, details.data),
+              builder: (context, candidateData, rejectedData) {
+                return Container(
+                  width: 100, height: 100,
+                  decoration: BoxDecoration(
+                    color: isMatched ? Colors.green.shade100 : Colors.white24,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: isMatched ? Colors.green : Colors.white, width: 3),
+                  ),
+                  child: Center(
+                    child: isMatched 
+                      ? const Icon(Icons.check_circle, color: Colors.green, size: 60)
+                      : Text(letter.character, style: TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Colors.grey.shade400)),
+                  ),
+                );
+              },
+            );
+          }).toList(),
+        ),
+        const Spacer(),
+        Wrap(
+          spacing: 20,
+          runSpacing: 20,
+          alignment: WrapAlignment.center,
+          children: _options.map((letter) {
+            final isUsed = _matched[letter.id] == true;
+            if (isUsed) return const SizedBox(width: 80, height: 80);
+
+            return Draggable<Letter>(
+              data: letter,
+              feedback: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: 80, height: 80,
+                  decoration: BoxDecoration(color: Colors.orange.shade400, borderRadius: BorderRadius.circular(20)),
+                  child: Center(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white))),
+                ),
+              ),
+              childWhenDragging: const SizedBox(width: 80, height: 80), // شيل الشكل خالص وهو بيتسحب
+              child: Container(
+                width: 80, height: 80,
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade400,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))],
+                ),
+                child: Center(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white))),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 80),
+      ],
+    );
+  }
+
+  Widget _buildResult() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const StarBurst(stars: 3),
+          Row(mainAxisSize: MainAxisSize.min, children: List.generate(3, (_) => const Icon(Icons.star, size: 80, color: Colors.amber))),
+          const SizedBox(height: 32),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton.filled(iconSize: 64, onPressed: () { setState(() => _isLoading = true); _initGame(); }, icon: const Icon(Icons.replay)),
+              const SizedBox(width: 32),
+              IconButton.filled(iconSize: 64, onPressed: () => context.go('/letters'), icon: const Icon(Icons.check)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+## 📄 `lib/features/games/presentation/professions_choice_game.dart`
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../data/models/profession_item.dart';
+import '../../../providers/audio_providers.dart';
+import '../../../providers/progress_providers.dart';
+import '../../../core/widgets/kids_background.dart';
+import '../../../core/animations/floating.dart';
+import '../../../core/animations/star_burst.dart';
+
+class ProfessionsChoiceGame extends ConsumerStatefulWidget {
+  const ProfessionsChoiceGame({super.key});
+  @override
+  ConsumerState<ProfessionsChoiceGame> createState() => _ProfessionsChoiceGameState();
+}
+
+class _ProfessionsChoiceGameState extends ConsumerState<ProfessionsChoiceGame> {
+  static const List<ProfessionItem> professions = [
+    ProfessionItem(id: 'carpenter', name: 'نَجَّار', emoji: '👨‍🔧', toolId: 'saw'),
+    ProfessionItem(id: 'doctor', name: 'طَبِيب', emoji: '👨‍⚕️', toolId: 'stethoscope'),
+    ProfessionItem(id: 'teacher', name: 'مُعَلِّم', emoji: '👨‍🏫', toolId: 'book'),
+    ProfessionItem(id: 'chef', name: 'طَبَّاخ', emoji: '👨‍🍳', toolId: 'pan'),
+    ProfessionItem(id: 'pilot', name: 'طَيَّار', emoji: '👨‍✈️', toolId: 'plane'),
+    ProfessionItem(id: 'farmer', name: 'فَلَّاح', emoji: '👨‍🌾', toolId: 'tractor'),
+    ProfessionItem(id: 'firefighter', name: 'رَجُل إِطْفَاء', emoji: '👨‍🚒', toolId: 'firetruck'),
+    ProfessionItem(id: 'police', name: 'شُرْطِي', emoji: '👮', toolId: 'badge'),
+    ProfessionItem(id: 'engineer', name: 'مُهَنْدِس', emoji: '👷', toolId: 'helmet'),
+    ProfessionItem(id: 'artist', name: 'رَسَّام', emoji: '👨‍🎨', toolId: 'palette'),
+    ProfessionItem(id: 'scientist', name: 'عَالِم', emoji: '👨‍🔬', toolId: 'microscope'),
+    ProfessionItem(id: 'baker', name: 'خَبَّاز', emoji: '🥖', toolId: 'bread'),
+  ];
+
+  static const Map<String, ToolItem> allTools = {
+    'saw': ToolItem(id: 'saw', name: 'مِنْشَار', emoji: '🪚'),
+    'stethoscope': ToolItem(id: 'stethoscope', name: 'سَمَّاعَة', emoji: '🩺'),
+    'book': ToolItem(id: 'book', name: 'كِتَاب', emoji: '📚'),
+    'pan': ToolItem(id: 'pan', name: 'مِقْلَاة', emoji: '🍳'),
+    'plane': ToolItem(id: 'plane', name: 'طَائِرَة', emoji: '✈️'),
+    'tractor': ToolItem(id: 'tractor', name: 'جَرَّارَة', emoji: '🚜'),
+    'firetruck': ToolItem(id: 'firetruck', name: 'عَرَبَة إِطْفَاء', emoji: '🚒'),
+    'badge': ToolItem(id: 'badge', name: 'شَارَة', emoji: '🛡️'),
+    'helmet': ToolItem(id: 'helmet', name: 'خُوذَة', emoji: '⛑️'),
+    'palette': ToolItem(id: 'palette', name: 'لَوْحَة أَلْوَان', emoji: '🎨'),
+    'microscope': ToolItem(id: 'microscope', name: 'مِجْهَر', emoji: '🔬'),
+    'bread': ToolItem(id: 'bread', name: 'خُبْز', emoji: '🥖'),
+  };
+
+  int _currentIndex = 0;
+  List<String> _options = [];
+  String? _wrongId;
+  String? _okId;
+  bool _isFinished = false;
+  int _wrongAttempts = 0;
+  bool _locked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initRound();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(audioServiceProvider).playVoice('instructions/professions');
+    });
+  }
+
+  void _initRound() {
+    final profession = professions[_currentIndex];
+    final otherTools = allTools.keys.where((k) => k != profession.toolId).toList()..shuffle();
+    setState(() {
+      _options = [profession.toolId, ...otherTools.take(2)]..shuffle();
+      _okId = null;
+      _wrongId = null;
+      _locked = false;
+    });
+  }
+
+  void _onTapTool(String toolId) async {
+    if (_locked) return;
+    final profession = professions[_currentIndex];
+    if (toolId == profession.toolId) {
+      setState(() { _okId = toolId; _locked = true; });
+      ref.read(audioServiceProvider).playVoice('instructions/right', force: true);
+      await Future.delayed(const Duration(milliseconds: 1000));
+      if (_currentIndex < professions.length - 1) {
+        setState(() { _currentIndex++; });
+        _initRound();
+      } else {
+        setState(() => _isFinished = true);
+        ref.read(progressRepositoryProvider).recordResult(
+          activityId: 'professions_choice_game',
+          contentId: 'professions',
+          kind: 'profession',
+          attempts: professions.length + _wrongAttempts,
+          correct: professions.length,
+          stars: _wrongAttempts == 0 ? 3 : (_wrongAttempts <= 3 ? 2 : 1),
+        );
+      }
+    } else {
+      setState(() { _wrongId = toolId; _wrongAttempts++; });
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (mounted) setState(() => _wrongId = null);
+    }
+  }
+
+  @override
+  void dispose() {
+    ref.read(audioServiceProvider).stop();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final profession = professions[_currentIndex];
+    return Scaffold(
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 36, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
+              title: Text('اختيار الأداة (${_currentIndex + 1}/${professions.length})', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+              centerTitle: true,
+            ),
+            Expanded(
+              child: _isFinished ? _buildResult() : _buildGameBoard(profession),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGameBoard(ProfessionItem profession) {
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+          child: const Text('مَا هِيَ الأَدَاة الَّتِي يَسْتَخْدِمُهَا؟', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+        ),
+        const SizedBox(height: 24),
+        Floating(
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30), boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 15, offset: Offset(0, 8))]),
+            child: Column(
+              children: [
+                Text(profession.emoji, style: const TextStyle(fontSize: 120)),
+                const SizedBox(height: 8),
+                Text(profession.name, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+              ],
+            ),
+          ),
+        ),
+        const Spacer(),
+        Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          alignment: WrapAlignment.center,
+          children: _options.map((toolId) {
+            final tool = allTools[toolId]!;
+            final isOk = toolId == _okId;
+            final isWrong = toolId == _wrongId;
+            return GestureDetector(
+              onTap: () => _onTapTool(toolId),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: 110, height: 130,
+                decoration: BoxDecoration(
+                  color: isOk ? Colors.green.shade100 : (isWrong ? Colors.orange.shade100 : Colors.white),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: isOk ? Colors.green : (isWrong ? Colors.orange : Colors.grey.shade300), width: 4),
+                  boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(tool.emoji, style: const TextStyle(fontSize: 60)),
+                    const SizedBox(height: 8),
+                    Text(tool.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isOk ? Colors.green : (isWrong ? Colors.orange : Colors.black87))),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const Spacer(),
+      ],
+    );
+  }
+
+  Widget _buildResult() {
+    final stars = _wrongAttempts == 0 ? 3 : (_wrongAttempts <= 3 ? 2 : 1);
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          StarBurst(stars: stars),
+          Row(mainAxisSize: MainAxisSize.min, children: List.generate(stars, (_) => const Icon(Icons.star, size: 80, color: Colors.amber))),
+          const SizedBox(height: 32),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton.filled(iconSize: 64, onPressed: () {
+                setState(() { _currentIndex = 0; _isFinished = false; _wrongAttempts = 0; });
+                _initRound();
+              }, icon: const Icon(Icons.replay)),
+              const SizedBox(width: 32),
+              IconButton.filled(iconSize: 64, onPressed: () => context.go('/'), icon: const Icon(Icons.check)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+## 📄 `lib/features/games/presentation/professions_drag_game.dart`
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../data/models/profession_item.dart';
+import '../../../providers/audio_providers.dart';
+import '../../../providers/progress_providers.dart';
+import '../../../core/widgets/kids_background.dart';
+import '../../../core/animations/star_burst.dart';
+
+class ProfessionsDragGame extends ConsumerStatefulWidget {
+  const ProfessionsDragGame({super.key});
+  @override
+  ConsumerState<ProfessionsDragGame> createState() => _ProfessionsDragGameState();
+}
+
+class _ProfessionsDragGameState extends ConsumerState<ProfessionsDragGame> {
+  static const List<ProfessionItem> professions = [
+    ProfessionItem(id: 'carpenter', name: 'نَجَّار', emoji: '👨‍🔧', toolId: 'saw'),
+    ProfessionItem(id: 'doctor', name: 'طَبِيب', emoji: '👨‍⚕️', toolId: 'stethoscope'),
+    ProfessionItem(id: 'teacher', name: 'مُعَلِّم', emoji: '👨‍🏫', toolId: 'book'),
+    ProfessionItem(id: 'chef', name: 'طَبَّاخ', emoji: '👨‍🍳', toolId: 'pan'),
+    ProfessionItem(id: 'pilot', name: 'طَيَّار', emoji: '👨‍✈️', toolId: 'plane'),
+    ProfessionItem(id: 'farmer', name: 'فَلَّاح', emoji: '👨‍🌾', toolId: 'tractor'),
+    ProfessionItem(id: 'firefighter', name: 'رَجُل إِطْفَاء', emoji: '👨‍🚒', toolId: 'firetruck'),
+    ProfessionItem(id: 'police', name: 'شُرْطِي', emoji: '👮', toolId: 'badge'),
+    ProfessionItem(id: 'engineer', name: 'مُهَنْدِس', emoji: '👷', toolId: 'helmet'),
+    ProfessionItem(id: 'artist', name: 'رَسَّام', emoji: '👨‍🎨', toolId: 'palette'),
+    ProfessionItem(id: 'scientist', name: 'عَالِم', emoji: '👨‍🔬', toolId: 'microscope'),
+    ProfessionItem(id: 'baker', name: 'خَبَّاز', emoji: '🥖', toolId: 'bread'),
+  ];
+
+  static const Map<String, ToolItem> allTools = {
+    'saw': ToolItem(id: 'saw', name: 'مِنْشَار', emoji: '🪚'),
+    'stethoscope': ToolItem(id: 'stethoscope', name: 'سَمَّاعَة', emoji: '🩺'),
+    'book': ToolItem(id: 'book', name: 'كِتَاب', emoji: '📚'),
+    'pan': ToolItem(id: 'pan', name: 'مِقْلَاة', emoji: '🍳'),
+    'plane': ToolItem(id: 'plane', name: 'طَائِرَة', emoji: '✈️'),
+    'tractor': ToolItem(id: 'tractor', name: 'جَرَّارَة', emoji: '🚜'),
+    'firetruck': ToolItem(id: 'firetruck', name: 'عَرَبَة إِطْفَاء', emoji: '🚒'),
+    'badge': ToolItem(id: 'badge', name: 'شَارَة', emoji: '🛡️'),
+    'helmet': ToolItem(id: 'helmet', name: 'خُوذَة', emoji: '⛑️'),
+    'palette': ToolItem(id: 'palette', name: 'لَوْحَة أَلْوَان', emoji: '🎨'),
+    'microscope': ToolItem(id: 'microscope', name: 'مِجْهَر', emoji: '🔬'),
+    'bread': ToolItem(id: 'bread', name: 'خُبْز', emoji: '🥖'),
+  };
+
+  int _currentIndex = 0;
+  List<String> _options = [];
+  bool _isFinished = false;
+  bool _locked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initRound();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(audioServiceProvider).playVoice('instructions/match');
+    });
+  }
+
+  void _initRound() {
+    final profession = professions[_currentIndex];
+    final others = allTools.keys.where((k) => k != profession.toolId).toList()..shuffle();
+    setState(() {
+      _options = [profession.toolId, ...others.take(2)]..shuffle();
+      _locked = false;
+    });
+  }
+
+  void _onDragAccepted(String toolId) async {
+    if (_locked) return;
+    final profession = professions[_currentIndex];
+    if (toolId == profession.toolId) {
+      setState(() => _locked = true);
+      ref.read(audioServiceProvider).playVoice('instructions/right', force: true);
+      await Future.delayed(const Duration(milliseconds: 1000));
+      
+      if (_currentIndex < professions.length - 1) {
+        setState(() { _currentIndex++; });
+        _initRound();
+      } else {
+        setState(() => _isFinished = true);
+        ref.read(progressRepositoryProvider).recordResult(
+          activityId: 'professions_drag_game',
+          contentId: 'professions',
+          kind: 'profession',
+          attempts: professions.length,
+          correct: professions.length,
+          stars: 3,
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('حاول مرة أخرى!'), duration: Duration(milliseconds: 500)),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    ref.read(audioServiceProvider).stop();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = professions[_currentIndex];
+    return Scaffold(
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 36, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
+              title: Text('توصيل المهن (${_currentIndex + 1}/${professions.length})', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+              centerTitle: true,
+            ),
+            Expanded(
+              child: _isFinished ? _buildResult() : _buildGameBoard(p),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGameBoard(ProfessionItem profession) {
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+          child: const Text('اسْحَب الأَدَاة الصَّحِيحَة إِلَى المُهِمَّة', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+        ),
+        const SizedBox(height: 24),
+        
+        DragTarget<String>(
+          onAcceptWithDetails: (details) => _onDragAccepted(details.data),
+          builder: (context, candidateData, rejectedData) {
+            return Container(
+              width: 180, height: 220, // الارتفاع ده مهم عشان نمنع الشريط الأصفر
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: Colors.orange, width: 5),
+                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 15, offset: Offset(0, 8))],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(profession.emoji, style: const TextStyle(fontSize: 90)),
+                  const SizedBox(height: 8),
+                  Text(profession.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                ],
+              ),
+            );
+          },
+        ),
+        const Spacer(),
+        
+        Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          alignment: WrapAlignment.center,
+          children: _options.map((toolId) {
+            final tool = allTools[toolId]!;
+            return Draggable<String>(
+              data: toolId,
+              feedback: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: 100, height: 120,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.orange, width: 4),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(tool.emoji, style: const TextStyle(fontSize: 50)),
+                      const SizedBox(height: 8),
+                      Text(tool.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+              ),
+              childWhenDragging: const SizedBox(width: 100, height: 120),
+              child: Container(
+                width: 100, height: 120,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.orange, width: 4),
+                  boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(tool.emoji, style: const TextStyle(fontSize: 50)),
+                    const SizedBox(height: 8),
+                    Text(tool.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const Spacer(),
+      ],
+    );
+  }
+
+  Widget _buildResult() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const StarBurst(stars: 3),
+          Row(mainAxisSize: MainAxisSize.min, children: List.generate(3, (_) => const Icon(Icons.star, size: 80, color: Colors.amber))),
+          const SizedBox(height: 32),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton.filled(iconSize: 64, onPressed: () {
+                setState(() { _currentIndex = 0; _isFinished = false; });
+                _initRound();
+              }, icon: const Icon(Icons.replay)),
+              const SizedBox(width: 32),
+              IconButton.filled(iconSize: 64, onPressed: () => context.go('/'), icon: const Icon(Icons.check)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+## 📄 `lib/features/games/presentation/professions_learn.dart`
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../providers/audio_providers.dart';
+import '../../../core/widgets/kids_background.dart';
+import '../../../core/animations/bounce_in.dart';
+import '../../../core/animations/floating.dart';
+
+class ProfessionsLearn extends ConsumerStatefulWidget {
+  const ProfessionsLearn({super.key});
+
+  @override
+  ConsumerState<ProfessionsLearn> createState() => _ProfessionsLearnState();
+}
+
+class _ProfessionsLearnState extends ConsumerState<ProfessionsLearn> {
+  static const List<Map<String, String>> professions = [
+    {'name': 'نَجَّار', 'emoji': '👨‍🔧', 'tool': 'مِنْشَار', 'toolEmoji': '🪚', 'audio': 'professions/carpenter'},
+    {'name': 'طَبِيب', 'emoji': '👨‍⚕️', 'tool': 'سَمَّاعَة', 'toolEmoji': '🩺', 'audio': 'professions/doctor'},
+    {'name': 'مُعَلِّم', 'emoji': '👨‍🏫', 'tool': 'كِتَاب', 'toolEmoji': '📚', 'audio': 'professions/teacher'},
+    {'name': 'طَبَّاخ', 'emoji': '👨‍🍳', 'tool': 'مِقْلَاة', 'toolEmoji': '🍳', 'audio': 'professions/chef'},
+    {'name': 'طَيَّار', 'emoji': '👨‍✈️', 'tool': 'طَائِرَة', 'toolEmoji': '✈️', 'audio': 'professions/pilot'},
+    {'name': 'فَلَّاح', 'emoji': '👨‍🌾', 'tool': 'جَرَّارَة', 'toolEmoji': '🚜', 'audio': 'professions/farmer'},
+    {'name': 'رَجُل إِطْفَاء', 'emoji': '👨‍🚒', 'tool': 'عَرَبَة إِطْفَاء', 'toolEmoji': '🚒', 'audio': 'professions/firefighter'},
+    {'name': 'شُرْطِي', 'emoji': '👮', 'tool': 'شَارَة', 'toolEmoji': '🛡️', 'audio': 'professions/police'},
+    {'name': 'مُهَنْدِس', 'emoji': '👷', 'tool': 'خُوذَة', 'toolEmoji': '⛑️', 'audio': 'professions/engineer'},
+    {'name': 'رَسَّام', 'emoji': '👨‍🎨', 'tool': 'لَوْحَة أَلْوَان', 'toolEmoji': '🎨', 'audio': 'professions/artist'},
+    {'name': 'عَالِم', 'emoji': '👨‍🔬', 'tool': 'مِجْهَر', 'toolEmoji': '🔬', 'audio': 'professions/scientist'},
+    {'name': 'خَبَّاز', 'emoji': '👨‍🍳', 'tool': 'خُبْز', 'toolEmoji': '🥖', 'audio': 'professions/baker'},
+  ];
+
+  int _currentIndex = 0;
+
+  void _speak() {
+    final p = professions[_currentIndex];
+    ref.read(audioServiceProvider).playVoice(p['audio']!, force: true);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _speak());
+  }
+
+  @override
+  void dispose() {
+    ref.read(audioServiceProvider).stop();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = professions[_currentIndex];
+    return Scaffold(
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 36, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
+              title: const Text('تعلّم المهن', style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
+              centerTitle: true,
+            ),
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: BounceIn(
+                    key: ValueKey(_currentIndex),
+                    child: Container(
+                      width: 350,
+                      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(40),
+                        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, 10))],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Floating(child: Text(p['emoji']!, style: const TextStyle(fontSize: 100))),
+                          const SizedBox(height: 8),
+                          Text(p['name']!, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                          const SizedBox(height: 16),
+                          const Text('يَسْتَخْدِمُ:', style: TextStyle(fontSize: 20, color: Colors.grey)),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(p['toolEmoji']!, style: const TextStyle(fontSize: 60)),
+                              const SizedBox(width: 16),
+                              Text(p['tool']!, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.orange)),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          IconButton.filled(iconSize: 40, onPressed: _speak, icon: const Icon(Icons.volume_up)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton.filled(
+                    style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.teal),
+                    iconSize: 48,
+                    onPressed: () { setState(() { _currentIndex = (_currentIndex - 1 + professions.length) % professions.length; }); _speak(); },
+                    icon: const Icon(Icons.arrow_back),
+                  ),
+                  Text('${_currentIndex + 1} / ${professions.length}', style: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
+                  IconButton.filled(
+                    style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.teal),
+                    iconSize: 48,
+                    onPressed: () { setState(() { _currentIndex = (_currentIndex + 1) % professions.length; }); _speak(); },
+                    icon: const Icon(Icons.arrow_forward),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+## 📄 `lib/features/games/presentation/professions_menu.dart`
+```dart
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/widgets/kids_background.dart';
+import '../../../core/widgets/kids_button.dart';
+import '../../../core/animations/bounce_in.dart';
+
+class ProfessionsMenu extends StatelessWidget {
+  const ProfessionsMenu({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
+              title: const Text('المهن', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+              centerTitle: true,
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    BounceIn(
+                      child: KidsButton(
+                        color: Colors.green.shade400,
+                        onTap: () => context.push('/professions/learn'),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.school, size: 60, color: Colors.white),
+                            SizedBox(height: 8),
+                            Text('تعلّم المهن', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    BounceIn(
+                      child: KidsButton(
+                        color: Colors.blue.shade400,
+                        onTap: () => context.push('/professions/choice'),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.touch_app, size: 60, color: Colors.white),
+                            SizedBox(height: 8),
+                            Text('اختيار الأداة', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    BounceIn(
+                      child: KidsButton(
+                        color: Colors.orange.shade400,
+                        onTap: () => context.push('/professions/drag'),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.drag_indicator, size: 60, color: Colors.white),
+                            SizedBox(height: 8),
+                            Text('توصيل الأداة', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+## 📄 `lib/features/games/presentation/shape_shadow_game.dart`
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../providers/audio_providers.dart';
+import '../../../providers/progress_providers.dart';
+import '../../../core/widgets/kids_background.dart';
+import '../../../core/animations/star_burst.dart';
+import '../../../data/models/shape_item.dart';
+import '../../shapes/presentation/shapes_screen.dart';
+
+class ShapeShadowGame extends ConsumerStatefulWidget {
+  const ShapeShadowGame({super.key});
+
+  @override
+  ConsumerState<ShapeShadowGame> createState() => _ShapeShadowGameState();
+}
+
+class _ShapeShadowGameState extends ConsumerState<ShapeShadowGame> {
+  List<ShapeItem> _targetShapes = [];
+  List<ShapeItem> _options = [];
+  Map<String, bool> _matched = {};
+  bool _isFinished = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initGame();
+  }
+
+  void _initGame() {
+    // نختار 3 أشكال عشوائية
+    final allShapes = ShapesScreen.shapes.toList()..shuffle();
+    final selected = allShapes.take(3).toList();
+
+    setState(() {
+      _targetShapes = selected;
+      _options = selected.toList()..shuffle();
+      _matched = {for (var s in selected) s.id: false};
+      _isFinished = false;
+    });
+  }
+
+  void _onDragAccepted(String shadowId, ShapeItem draggedShape) {
+    if (shadowId == draggedShape.id) {
+      setState(() {
+        _matched[shadowId] = true;
+      });
+      ref.read(audioServiceProvider).playVoice('shapes/${draggedShape.id}', force: true);
+
+      // التحقق من الفوز
+      if (_matched.values.every((v) => v == true)) {
+        setState(() => _isFinished = true);
+        ref.read(progressRepositoryProvider).recordResult(
+          activityId: 'shape_shadow_game',
+          contentId: 'shapes',
+          kind: 'shape',
+          attempts: 3,
+          correct: 3,
+          stars: 3,
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('حاول مرة أخرى!'), duration: Duration(milliseconds: 500)),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 36, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go('/shapes')),
+              title: const Text('طابق الأشكال', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+              centerTitle: true,
+            ),
+            Expanded(
+              child: _isFinished ? _buildResult() : _buildGameBoard(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGameBoard() {
+    return Column(
+      children: [
+        const SizedBox(height: 20),
+        const Text('اسحب الشكل الملون وضعه على ظله', style: TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 20),
+        
+        // الأشكال المفرغة (الأهداف)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: _targetShapes.map((shape) {
+            final isMatched = _matched[shape.id] ?? false;
+            return DragTarget<ShapeItem>(
+              onAcceptWithDetails: (details) => _onDragAccepted(shape.id, details.data),
+              builder: (context, candidateData, rejectedData) {
+                return Container(
+                  width: 100, height: 100,
+                  decoration: BoxDecoration(
+                    color: isMatched ? Colors.green.shade100 : Colors.white24,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: isMatched ? Colors.green : Colors.white, width: 3),
+                  ),
+                  child: Center(
+                    child: isMatched 
+                      ? const Icon(Icons.check_circle, color: Colors.green, size: 60)
+                      : SizedBox(
+                          width: 70, height: 70,
+                          child: CustomPaint(painter: ShapePainter(shape.type, Colors.grey.shade400)), // ظل رمادي
+                        ),
+                  ),
+                );
+              },
+            );
+          }).toList(),
+        ),
+        const Spacer(),
+        
+        // الأشكال الملونة (اللي بتتسحب)
+        Wrap(
+          spacing: 20,
+          runSpacing: 20,
+          alignment: WrapAlignment.center,
+          children: _options.map((shape) {
+            final isUsed = _matched[shape.id] == true;
+            if (isUsed) return const SizedBox(width: 80, height: 80);
+
+            return Draggable<ShapeItem>(
+              data: shape,
+              feedback: Material(
+                color: Colors.transparent,
+                child: SizedBox(
+                  width: 80, height: 80,
+                  child: CustomPaint(painter: ShapePainter(shape.type, Colors.blue.shade400)),
+                ),
+              ),
+              childWhenDragging: const SizedBox(width: 80, height: 80),
+              child: SizedBox(
+                width: 80, height: 80,
+                child: CustomPaint(painter: ShapePainter(shape.type, Colors.blue.shade400)),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 80),
+      ],
+    );
+  }
+
+  Widget _buildResult() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const StarBurst(stars: 3),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: List.generate(3, (_) => const Icon(Icons.star, size: 80, color: Colors.amber)),
+          ),
+          const SizedBox(height: 32),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton.filled(iconSize: 64, onPressed: _initGame, icon: const Icon(Icons.replay)),
+              const SizedBox(width: 32),
+              IconButton.filled(iconSize: 64, onPressed: () => context.go('/shapes'), icon: const Icon(Icons.check)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
 ## 📄 `lib/features/home/home_screen.dart`
 ```dart
 import 'package:flutter/material.dart';
@@ -2831,7 +4961,7 @@ class HomeScreen extends StatelessWidget {
                       const Floating(
                         child: BounceIn(
                           child: Text(
-                            'بيت الحروف',
+                            'أول خطوة',
                             style: TextStyle(
                               fontSize: 56,
                               fontWeight: FontWeight.w900,
@@ -2845,24 +4975,48 @@ class HomeScreen extends StatelessWidget {
                       
                       // الأزرار (عرضية أو طولية)
                       if (isLandscape)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 32,
+                          runSpacing: 24,
                           children: [
                             buildMenuButton('الحروف', 'أ', '/letters', const Color(0xFFFF7043)),
-                            const SizedBox(width: 48),
                             buildMenuButton('الأرقام', '١', '/numbers', const Color(0xFF29B6F6)),
+                            buildMenuButton('الألوان', '🎨', '/colors', const Color(0xFF9C27B0)),
+                            buildMenuButton('الأشكال', '🔺', '/shapes', const Color(0xFF4CAF50)),
+                            buildMenuButton('التلوين', '🖍️', '/coloring', const Color(0xFFFF9800)),
+                            buildMenuButton('المهن', '👷', '/professions', const Color(0xFF607D8B)),
                           ],
                         )
                       else
                         Column(
                           children: [
                             buildMenuButton('الحروف', 'أ', '/letters', const Color(0xFFFF7043)),
-                            const SizedBox(height: 32),
+                            const SizedBox(height: 24),
                             buildMenuButton('الأرقام', '١', '/numbers', const Color(0xFF29B6F6)),
+                            const SizedBox(height: 24),
+                            buildMenuButton('الألوان', '🎨', '/colors', const Color(0xFF9C27B0)),
+                            const SizedBox(height: 24),
+                            buildMenuButton('الأشكال', '🔺', '/shapes', const Color(0xFF4CAF50)),
+                            const SizedBox(height: 24),
+                            buildMenuButton('التلوين', '🖍️', '/coloring', const Color(0xFFFF9800)),
+                            buildMenuButton('المهن', '👷', '/professions', const Color(0xFF607D8B)),
                           ],
                         ),
                     ],
                   ),
+                ),
+              ),
+            ),
+            // الحقوق في الأسفل
+            Positioned(
+              bottom: 4,
+              left: 0,
+              right: 0,
+              child: const Center(
+                child: Text(
+                  'Powered by Safyeldin Abdo © Ghinax',
+                  style: TextStyle(fontSize: 11, color: Colors.white70),
                 ),
               ),
             ),
@@ -2873,6 +5027,26 @@ class HomeScreen extends StatelessWidget {
               child: SafeArea(
                 child: HoldToOpen(
                   onOpen: () => context.push('/parent-gate'),
+                ),
+              ),
+            ),
+            PositionedDirectional(
+              top: 10,
+              start: 10,
+              child: SafeArea(
+                child: Row(
+                  children: [
+                    IconButton(
+                      iconSize: 40,
+                      icon: const Icon(Icons.emoji_events, color: Colors.amber),
+                      onPressed: () => context.push('/rewards'),
+                    ),
+                    IconButton(
+                      iconSize: 40,
+                      icon: const Icon(Icons.info_outline, color: Colors.white),
+                      onPressed: () => context.push('/about'),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -3050,27 +5224,35 @@ class _LessonBody extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 KidsButton(
-                  width: 80,
-                  height: 80,
+                  width: 70,
+                  height: 70,
                   color: Colors.purple.shade400,
                   onTap: () => context.push('/letters/${letter.id}/recognize'),
-                  child: const Icon(Icons.touch_app, size: 40, color: Colors.white),
+                  child: const Icon(Icons.touch_app, size: 32, color: Colors.white),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 KidsButton(
-                  width: 80,
-                  height: 80,
+                  width: 70,
+                  height: 70,
                   color: Colors.amber.shade600,
                   onTap: () => context.push('/letters/${letter.id}/match'),
-                  child: const Icon(Icons.image, size: 40, color: Colors.white),
+                  child: const Icon(Icons.image, size: 32, color: Colors.white),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 KidsButton(
-                  width: 80,
-                  height: 80,
+                  width: 70,
+                  height: 70,
+                  color: Colors.orange.shade600,
+                  onTap: () => context.push('/letters/${letter.id}/drag'),
+                  child: const Icon(Icons.drag_indicator, size: 32, color: Colors.white),
+                ),
+                const SizedBox(width: 12),
+                KidsButton(
+                  width: 70,
+                  height: 70,
                   color: Colors.teal.shade400,
                   onTap: () => context.push('/letters/${letter.id}/trace'),
-                  child: const Icon(Icons.draw, size: 40, color: Colors.white),
+                  child: const Icon(Icons.draw, size: 32, color: Colors.white),
                 ),
               ],
             ),
@@ -3109,15 +5291,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../providers/content_providers.dart';
 import '../../../providers/progress_providers.dart';
+import '../../../providers/audio_providers.dart';
+import '../../../core/animations/floating.dart';
 import '../../../core/widgets/kids_background.dart';
 import '../../../core/widgets/kids_button.dart';
-import '../../../core/animations/bounce_in.dart';
 
 class LettersScreen extends ConsumerWidget {
   const LettersScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // تشغيل الصوت الترحيبي أول مرة
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(audioServiceProvider).playVoice('instructions/letters');
+    });
     final repo = ref.watch(contentRepositoryProvider);
     final stars = ref.watch(starsProvider).valueOrNull ?? const {};
 
@@ -3131,6 +5318,14 @@ class LettersScreen extends ConsumerWidget {
               leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
               title: const Text('الحروف', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
               centerTitle: true,
+              actions: [
+                IconButton(
+                  iconSize: 40,
+                  icon: const Icon(Icons.extension, color: Colors.amber),
+                  tooltip: 'لعبة تطابق الحروف',
+                  onPressed: () => context.push('/letters/shadow_game'),
+                ),
+              ],
             ),
             Expanded(
               child: repo.when(
@@ -3155,7 +5350,8 @@ class LettersScreen extends ConsumerWidget {
                         return Stack(
                           children: [
                             Positioned.fill(
-                              child: KidsButton(
+                              child: Floating(
+                                child: KidsButton(
                                 color: Colors.white,
                                 onTap: () => context.push('/letters/${l.id}'),
                                 child: FittedBox(
@@ -3165,6 +5361,7 @@ class LettersScreen extends ConsumerWidget {
                                     child: Text(l.character, style: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
                                   ),
                                 ),
+                              ),
                               ),
                             ),
                             if (earnedStars > 0)
@@ -3207,12 +5404,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/animations/bounce_in.dart';
-import '../../../core/animations/pulse_hint.dart';
 import '../../../core/widgets/kids_background.dart';
 import '../../../core/widgets/kids_button.dart';
 import '../../../providers/audio_providers.dart';
 import '../../../providers/content_providers.dart';
 import '../../../providers/progress_providers.dart';
+import '../../../core/settings/app_settings.dart';
+import '../../../core/utils/arabic_numbers.dart';
 import '../domain/counting_state.dart';
 
 class NumberLessonScreen extends ConsumerStatefulWidget {
@@ -3225,11 +5423,6 @@ class NumberLessonScreen extends ConsumerStatefulWidget {
 class _NumberLessonScreenState extends ConsumerState<NumberLessonScreen> {
   CountingState? _counting;
   bool _done = false;
-
-  String _formatNumber(int n) {
-    const digits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    return n.toString().split('').map((c) => digits[int.parse(c)]).join();
-  }
 
   @override
   void initState() {
@@ -3256,6 +5449,7 @@ class _NumberLessonScreenState extends ConsumerState<NumberLessonScreen> {
     if (spoken == 0) return;
     setState(() {});
     
+    // تشغيل صوت الرقم اللي اتعد
     final item = repo.numberByValue(spoken);
     if (item != null) ref.read(audioServiceProvider).playVoice(item.audio, force: true);
 
@@ -3281,6 +5475,8 @@ class _NumberLessonScreenState extends ConsumerState<NumberLessonScreen> {
   @override
   Widget build(BuildContext context) {
     final repo = ref.watch(contentRepositoryProvider);
+    final style = ref.watch(settingsProvider).numeralStyle;
+
     return Scaffold(
       body: KidsBackground(
         child: Column(
@@ -3316,43 +5512,53 @@ class _NumberLessonScreenState extends ConsumerState<NumberLessonScreen> {
                           ),
                           child: Column(
                             children: [
-                              BounceIn(child: Text(_formatNumber(n.value), style: const TextStyle(fontSize: 140, fontWeight: FontWeight.bold, color: Color(0xFF29B6F6), height: 1.0))),
+                              BounceIn(child: Text(formatNumber(n.value, style), style: const TextStyle(fontSize: 120, fontWeight: FontWeight.bold, color: Color(0xFF29B6F6), height: 1.0))),
                               Text(n.nameText, style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.orange)),
                             ],
                           ),
                         ),
                         const Spacer(),
-                        // منطقة العد
-                        if (n.value > 0) Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: [
-                            for (var i = 0; i < n.value; i++)
-                              GestureDetector(
-                                onTap: () => _onTapObject(i),
-                                child: AnimatedOpacity(
-                                  duration: const Duration(milliseconds: 200),
-                                  opacity: c.counted.contains(i) ? 1.0 : 0.5,
-                                  child: Container(
-                                    width: 80,
-                                    height: 80,
-                                    decoration: BoxDecoration(
-                                      color: c.counted.contains(i) ? Colors.green.shade100 : Colors.white,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: c.counted.contains(i) ? Colors.green : Colors.grey.shade400, width: 4),
-                                      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
+                        
+                        // منطقة العد (لو الرقم أكبر من 20 هنكتفي بالرسالة عشان الشاشة متضربش)
+                        if (n.value > 0 && n.value <= 20)
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: Wrap(
+                                alignment: WrapAlignment.center,
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (var i = 0; i < n.value; i++)
+                                    GestureDetector(
+                                      onTap: () => _onTapObject(i),
+                                      child: AnimatedOpacity(
+                                        duration: const Duration(milliseconds: 200),
+                                        opacity: c.counted.contains(i) ? 1.0 : 0.5,
+                                        child: Container(
+                                          width: 60,
+                                          height: 60,
+                                          decoration: BoxDecoration(
+                                            color: c.counted.contains(i) ? Colors.green.shade100 : Colors.white,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: c.counted.contains(i) ? Colors.green : Colors.grey.shade400, width: 3),
+                                          ),
+                                          child: Center(
+                                            child: c.counted.contains(i) 
+                                              ? const Icon(Icons.check, color: Colors.green, size: 30)
+                                              : const Icon(Icons.apple, color: Colors.redAccent, size: 30),
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                    child: Center(
-                                      child: c.counted.contains(i) 
-                                        ? const Icon(Icons.check, color: Colors.green, size: 40)
-                                        : const Icon(Icons.apple, color: Colors.redAccent, size: 40),
-                                    ),
-                                  ),
-                                ),
+                                ],
                               ),
-                          ],
-                        ) else const Text('صِفْر (لَا شَيْء)', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white)),
+                            ),
+                          )
+                        else if (n.value > 20)
+                          const Text('رَقَم كَبِير!', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white))
+                        else 
+                          const Text('صِفْر (لَا شَيْء)', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white)),
+                        
                         const Spacer(),
                         if (_done) const Icon(Icons.star, size: 80, color: Colors.amber),
                         const Spacer(),
@@ -3361,8 +5567,10 @@ class _NumberLessonScreenState extends ConsumerState<NumberLessonScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             KidsButton(width: 80, height: 80, color: Colors.blue.shade400, onTap: _start, child: const Icon(Icons.replay, size: 40, color: Colors.white)),
-                            const SizedBox(width: 24),
+                            const SizedBox(width: 16),
                             KidsButton(width: 80, height: 80, color: Colors.purple.shade400, onTap: () => context.push('/numbers/${n.id}/pick'), child: const Icon(Icons.touch_app, size: 40, color: Colors.white)),
+                            const SizedBox(width: 16),
+                            KidsButton(width: 80, height: 80, color: Colors.orange.shade400, onTap: () => context.push('/numbers/${n.id}/count_game'), child: const Icon(Icons.filter_9_plus, size: 40, color: Colors.white)),
                           ],
                         ),
                         const SizedBox(height: 32),
@@ -3386,22 +5594,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../providers/content_providers.dart';
 import '../../../providers/progress_providers.dart';
+import '../../../providers/audio_providers.dart';
 import '../../../core/widgets/kids_background.dart';
 import '../../../core/widgets/kids_button.dart';
-import '../../../core/animations/bounce_in.dart';
+import '../../../core/settings/app_settings.dart';
+import '../../../core/utils/arabic_numbers.dart';
 
 class NumbersScreen extends ConsumerWidget {
   const NumbersScreen({super.key});
 
-  String _formatNumber(int n) {
-    const digits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    return n.toString().split('').map((c) => digits[int.parse(c)]).join();
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(audioServiceProvider).playVoice('instructions/numbers');
+    });
     final repo = ref.watch(contentRepositoryProvider);
     final stars = ref.watch(starsProvider).valueOrNull ?? const {};
+    final style = ref.watch(settingsProvider).numeralStyle;
 
     return Scaffold(
       body: KidsBackground(
@@ -3420,14 +5629,15 @@ class NumbersScreen extends ConsumerWidget {
                 error: (e, _) => Center(child: Text('خطأ: $e', style: const TextStyle(color: Colors.white))),
                 data: (r) => LayoutBuilder(
                   builder: (context, constraints) {
-                    int crossAxisCount = constraints.maxWidth > 900 ? 6 : (constraints.maxWidth > 600 ? 4 : 3);
+                    // شبكة ذكية: 5 أعمدة للموبايل، 8 للتابلت، 10 للكمبيوتر
+                    int crossAxisCount = constraints.maxWidth > 1200 ? 10 : (constraints.maxWidth > 800 ? 8 : (constraints.maxWidth > 500 ? 5 : 4));
                     
                     return GridView.builder(
                       padding: const EdgeInsets.all(16),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: crossAxisCount,
-                        mainAxisSpacing: 16,
-                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
                         childAspectRatio: 1.0,
                       ),
                       itemCount: r.numbers.length,
@@ -3443,14 +5653,14 @@ class NumbersScreen extends ConsumerWidget {
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(_formatNumber(n.value), style: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Colors.white)),
+                                    padding: const EdgeInsets.all(4.0),
+                                    child: Text(formatNumber(n.value, style), style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.white)),
                                   ),
                                 ),
                               ),
                             ),
                             if (earnedStars > 0)
-                              const PositionedDirectional(top: 4, end: 4, child: Icon(Icons.star, color: Colors.amber, size: 28)),
+                              const PositionedDirectional(top: 4, end: 4, child: Icon(Icons.star, color: Colors.amber, size: 24)),
                           ],
                         );
                       },
@@ -3714,6 +5924,20 @@ class ParentScreen extends ConsumerWidget {
               }
             },
           ),
+          const SizedBox(height: 24),
+          const Divider(),
+          const SizedBox(height: 8),
+          const Text(
+            'أول خطوة - الإصدار 1.0.0',
+            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Powered by Safyeldin Abdo © Ghinax',
+            style: TextStyle(color: Colors.grey, fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 40),
           const Text(
             'الخصوصية: لا يجمع التطبيق أي بيانات شخصية، ولا يتصل بالإنترنت إطلاقاً. يُحفظ التقدم على هذا الجهاز فقط.',
@@ -3733,6 +5957,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../providers/progress_providers.dart';
 import '../../../core/widgets/kids_background.dart';
+import '../../../core/animations/bounce_in.dart';
 
 class RewardsScreen extends ConsumerWidget {
   const RewardsScreen({super.key});
@@ -3755,15 +5980,25 @@ class RewardsScreen extends ConsumerWidget {
             ),
             Expanded(
               child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.emoji_events, size: 120, color: Colors.amber),
-                    const SizedBox(height: 24),
-                    Text('إجمالي النجوم: $totalStars', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white)),
-                    const SizedBox(height: 16),
-                    const Text('استمر في اللعب لتجمع المزيد!', style: TextStyle(fontSize: 20, color: Colors.white70)),
-                  ],
+                child: BounceIn(
+                  child: Container(
+                    padding: const EdgeInsets.all(40),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(40),
+                      boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, 10))],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.emoji_events, size: 120, color: Colors.amber),
+                        const SizedBox(height: 24),
+                        Text('إجمالي النجوم: $totalStars', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                        const SizedBox(height: 16),
+                        const Text('استمر في اللعب لتجمع المزيد!', style: TextStyle(fontSize: 20, color: Colors.grey)),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -3774,11 +6009,237 @@ class RewardsScreen extends ConsumerWidget {
   }
 }
 ```
+## 📄 `lib/features/shapes/presentation/shapes_screen.dart`
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/widgets/kids_background.dart';
+import '../../../core/animations/bounce_in.dart';
+import '../../../data/models/shape_item.dart';
+import '../../../providers/audio_providers.dart';
+
+class ShapesScreen extends ConsumerWidget {
+  const ShapesScreen({super.key});
+
+  static const List<ShapeItem> shapes = [
+    ShapeItem(id: 'circle', name: 'دَائِرَة', type: ShapeType.circle, emoji: '⭕'),
+    ShapeItem(id: 'square', name: 'مُرَبَّع', type: ShapeType.square, emoji: '🟦'),
+    ShapeItem(id: 'triangle', name: 'مُثَلَّث', type: ShapeType.triangle, emoji: '🔺'),
+    ShapeItem(id: 'rectangle', name: 'مُسْتَطِيل', type: ShapeType.rectangle, emoji: '▬'),
+    ShapeItem(id: 'diamond', name: 'مُعَيَّن', type: ShapeType.diamond, emoji: '🔷'),
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(audioServiceProvider).playVoice('instructions/shapes');
+    });
+
+    return Scaffold(
+      body: KidsBackground(
+        child: Column(
+          children: [
+            AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
+              title: const Text('الأشكال', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+              centerTitle: true,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 60,
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(backgroundColor: Colors.blue.shade400),
+                        onPressed: () => context.push('/shapes/game'),
+                        icon: const Icon(Icons.videogame_asset, color: Colors.white),
+                        label: const Text('لعبة الأشكال', style: TextStyle(fontSize: 18, color: Colors.white)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: SizedBox(
+                      height: 60,
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(backgroundColor: Colors.purple.shade400),
+                        onPressed: () => context.push('/shapes/shadow_game'),
+                        icon: const Icon(Icons.extension, color: Colors.white),
+                        label: const Text('طابق الظل', style: TextStyle(fontSize: 18, color: Colors.white)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  int crossAxisCount = constraints.maxWidth > 600 ? 4 : 2;
+                  return GridView.builder(
+                    padding: const EdgeInsets.all(16),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: 1.0,
+                    ),
+                    itemCount: shapes.length,
+                    itemBuilder: (context, i) {
+                      final s = shapes[i];
+                      return BounceIn(
+                        child: GestureDetector(
+                          onTap: () => ref.read(audioServiceProvider).playVoice('shapes/${s.id}', force: true),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30),
+                              boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 15, offset: Offset(0, 8))],
+                              border: Border.all(color: Colors.blue.shade200, width: 4),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(width: 80, height: 80, child: CustomPaint(painter: ShapePainter(s.type, Colors.blue.shade400))),
+                                const SizedBox(height: 8),
+                                Text(s.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ShapePainter extends CustomPainter {
+  ShapePainter(this.type, this.color);
+  final ShapeType type;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color..style = PaintingStyle.fill;
+    final w = size.width;
+    final h = size.height;
+
+    switch (type) {
+      case ShapeType.circle:
+        canvas.drawCircle(Offset(w / 2, h / 2), w / 2, paint);
+        break;
+      case ShapeType.square:
+        canvas.drawRect(Rect.fromLTWH(0, 0, w, h), paint);
+        break;
+      case ShapeType.rectangle:
+        canvas.drawRect(Rect.fromLTWH(0, h / 4, w, h / 2), paint);
+        break;
+      case ShapeType.triangle:
+        final path = Path()..moveTo(w / 2, 0)..lineTo(w, h)..lineTo(0, h)..close();
+        canvas.drawPath(path, paint);
+        break;
+      case ShapeType.diamond:
+        final path = Path()..moveTo(w / 2, 0)..lineTo(w, h / 2)..lineTo(w / 2, h)..lineTo(0, h / 2)..close();
+        canvas.drawPath(path, paint);
+        break;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+```
+## 📄 `lib/features/splash/splash_screen.dart`
+```dart
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../core/animations/bounce_in.dart';
+import '../../core/widgets/kids_background.dart';
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // الانتقال للشاشة الرئيسية بعد ثانيتين ونصف
+    Timer(const Duration(milliseconds: 2500), () {
+      if (mounted) context.go('/');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: KidsBackground(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              BounceIn(
+                child: Container(
+                  width: 180,
+                  height: 180,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, 10))],
+                  ),
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/images/ui/mascot.png',
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(Icons.school, size: 100, color: Colors.blue),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              const BounceIn(
+                child: Text(
+                  'أول خطوة',
+                  style: TextStyle(
+                    fontSize: 56,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    shadows: [Shadow(color: Color(0xFF00796B), offset: Offset(4, 4), blurRadius: 0)],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 48),
+              const CircularProgressIndicator(color: Colors.white),
+              const SizedBox(height: 24),
+              const Text('Powered by Safyeldin Abdo © Ghinax', style: TextStyle(fontSize: 11, color: Colors.white70)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
 ## 📄 `lib/features/tracing/domain/stroke_tracker.dart`
 ```dart
 import 'dart:math' as math;
 import 'dart:ui';
-import 'package:path_drawing/path_drawing.dart';
 
 class StrokeTracker {
   StrokeTracker(this.samples, {this.tolerance = 9});
@@ -3909,13 +6370,6 @@ class _TracePainter extends CustomPainter {
     // رسم المسارات الخافتة
     final guidePaint = Paint()
       ..color = Colors.grey.shade300
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 20
-      ..strokeCap = StrokeCap.round;
-
-    // رسم التقدم (الأخضر)
-    final progressPaint = Paint()
-      ..color = Colors.green
       ..style = PaintingStyle.stroke
       ..strokeWidth = 20
       ..strokeCap = StrokeCap.round;

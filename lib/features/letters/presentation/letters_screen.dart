@@ -3,15 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../providers/content_providers.dart';
 import '../../../providers/progress_providers.dart';
+import '../../../providers/audio_providers.dart';
+import '../../../core/animations/floating.dart';
 import '../../../core/widgets/kids_background.dart';
 import '../../../core/widgets/kids_button.dart';
-import '../../../core/animations/bounce_in.dart';
 
 class LettersScreen extends ConsumerWidget {
   const LettersScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // تشغيل الصوت الترحيبي أول مرة
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(audioServiceProvider).playVoice('instructions/letters');
+    });
     final repo = ref.watch(contentRepositoryProvider);
     final stars = ref.watch(starsProvider).valueOrNull ?? const {};
 
@@ -25,6 +30,14 @@ class LettersScreen extends ConsumerWidget {
               leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
               title: const Text('الحروف', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
               centerTitle: true,
+              actions: [
+                IconButton(
+                  iconSize: 40,
+                  icon: const Icon(Icons.extension, color: Colors.amber),
+                  tooltip: 'لعبة تطابق الحروف',
+                  onPressed: () => context.push('/letters/shadow_game'),
+                ),
+              ],
             ),
             Expanded(
               child: repo.when(
@@ -49,7 +62,8 @@ class LettersScreen extends ConsumerWidget {
                         return Stack(
                           children: [
                             Positioned.fill(
-                              child: KidsButton(
+                              child: Floating(
+                                child: KidsButton(
                                 color: Colors.white,
                                 onTap: () => context.push('/letters/${l.id}'),
                                 child: FittedBox(
@@ -59,6 +73,7 @@ class LettersScreen extends ConsumerWidget {
                                     child: Text(l.character, style: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
                                   ),
                                 ),
+                              ),
                               ),
                             ),
                             if (earnedStars > 0)

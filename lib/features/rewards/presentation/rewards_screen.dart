@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../providers/progress_providers.dart';
 import '../../../core/widgets/kids_background.dart';
+import '../../../core/animations/bounce_in.dart';
 
 class RewardsScreen extends ConsumerWidget {
   const RewardsScreen({super.key});
@@ -25,15 +26,25 @@ class RewardsScreen extends ConsumerWidget {
             ),
             Expanded(
               child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.emoji_events, size: 120, color: Colors.amber),
-                    const SizedBox(height: 24),
-                    Text('إجمالي النجوم: $totalStars', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white)),
-                    const SizedBox(height: 16),
-                    const Text('استمر في اللعب لتجمع المزيد!', style: TextStyle(fontSize: 20, color: Colors.white70)),
-                  ],
+                child: BounceIn(
+                  child: Container(
+                    padding: const EdgeInsets.all(40),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(40),
+                      boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, 10))],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.emoji_events, size: 120, color: Colors.amber),
+                        const SizedBox(height: 24),
+                        Text('إجمالي النجوم: $totalStars', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                        const SizedBox(height: 16),
+                        const Text('استمر في اللعب لتجمع المزيد!', style: TextStyle(fontSize: 20, color: Colors.grey)),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),

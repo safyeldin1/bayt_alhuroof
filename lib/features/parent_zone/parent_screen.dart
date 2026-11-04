@@ -70,6 +70,20 @@ class ParentScreen extends ConsumerWidget {
               }
             },
           ),
+          const SizedBox(height: 24),
+          const Divider(),
+          const SizedBox(height: 8),
+          const Text(
+            'أول خطوة - الإصدار 1.0.0',
+            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Powered by Safyeldin Abdo © Ghinax',
+            style: TextStyle(color: Colors.grey, fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 40),
           const Text(
             'الخصوصية: لا يجمع التطبيق أي بيانات شخصية، ولا يتصل بالإنترنت إطلاقاً. يُحفظ التقدم على هذا الجهاز فقط.',

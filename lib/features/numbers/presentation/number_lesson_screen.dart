@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/animations/bounce_in.dart';
-import '../../../core/animations/pulse_hint.dart';
 import '../../../core/widgets/kids_background.dart';
 import '../../../core/widgets/kids_button.dart';
 import '../../../providers/audio_providers.dart';
 import '../../../providers/content_providers.dart';
 import '../../../providers/progress_providers.dart';
+import '../../../core/settings/app_settings.dart';
+import '../../../core/utils/arabic_numbers.dart';
 import '../domain/counting_state.dart';
 
 class NumberLessonScreen extends ConsumerStatefulWidget {
@@ -20,11 +21,6 @@ class NumberLessonScreen extends ConsumerStatefulWidget {
 class _NumberLessonScreenState extends ConsumerState<NumberLessonScreen> {
   CountingState? _counting;
   bool _done = false;
-
-  String _formatNumber(int n) {
-    const digits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    return n.toString().split('').map((c) => digits[int.parse(c)]).join();
-  }
 
   @override
   void initState() {
@@ -51,6 +47,7 @@ class _NumberLessonScreenState extends ConsumerState<NumberLessonScreen> {
     if (spoken == 0) return;
     setState(() {});
     
+    // تشغيل صوت الرقم اللي اتعد
     final item = repo.numberByValue(spoken);
     if (item != null) ref.read(audioServiceProvider).playVoice(item.audio, force: true);
 
@@ -76,6 +73,8 @@ class _NumberLessonScreenState extends ConsumerState<NumberLessonScreen> {
   @override
   Widget build(BuildContext context) {
     final repo = ref.watch(contentRepositoryProvider);
+    final style = ref.watch(settingsProvider).numeralStyle;
+
     return Scaffold(
       body: KidsBackground(
         child: Column(
@@ -111,43 +110,53 @@ class _NumberLessonScreenState extends ConsumerState<NumberLessonScreen> {
                           ),
                           child: Column(
                             children: [
-                              BounceIn(child: Text(_formatNumber(n.value), style: const TextStyle(fontSize: 140, fontWeight: FontWeight.bold, color: Color(0xFF29B6F6), height: 1.0))),
+                              BounceIn(child: Text(formatNumber(n.value, style), style: const TextStyle(fontSize: 120, fontWeight: FontWeight.bold, color: Color(0xFF29B6F6), height: 1.0))),
                               Text(n.nameText, style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.orange)),
                             ],
                           ),
                         ),
                         const Spacer(),
-                        // منطقة العد
-                        if (n.value > 0) Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: [
-                            for (var i = 0; i < n.value; i++)
-                              GestureDetector(
-                                onTap: () => _onTapObject(i),
-                                child: AnimatedOpacity(
-                                  duration: const Duration(milliseconds: 200),
-                                  opacity: c.counted.contains(i) ? 1.0 : 0.5,
-                                  child: Container(
-                                    width: 80,
-                                    height: 80,
-                                    decoration: BoxDecoration(
-                                      color: c.counted.contains(i) ? Colors.green.shade100 : Colors.white,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: c.counted.contains(i) ? Colors.green : Colors.grey.shade400, width: 4),
-                                      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
+                        
+                        // منطقة العد (لو الرقم أكبر من 20 هنكتفي بالرسالة عشان الشاشة متضربش)
+                        if (n.value > 0 && n.value <= 20)
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: Wrap(
+                                alignment: WrapAlignment.center,
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (var i = 0; i < n.value; i++)
+                                    GestureDetector(
+                                      onTap: () => _onTapObject(i),
+                                      child: AnimatedOpacity(
+                                        duration: const Duration(milliseconds: 200),
+                                        opacity: c.counted.contains(i) ? 1.0 : 0.5,
+                                        child: Container(
+                                          width: 60,
+                                          height: 60,
+                                          decoration: BoxDecoration(
+                                            color: c.counted.contains(i) ? Colors.green.shade100 : Colors.white,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: c.counted.contains(i) ? Colors.green : Colors.grey.shade400, width: 3),
+                                          ),
+                                          child: Center(
+                                            child: c.counted.contains(i) 
+                                              ? const Icon(Icons.check, color: Colors.green, size: 30)
+                                              : const Icon(Icons.apple, color: Colors.redAccent, size: 30),
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                    child: Center(
-                                      child: c.counted.contains(i) 
-                                        ? const Icon(Icons.check, color: Colors.green, size: 40)
-                                        : const Icon(Icons.apple, color: Colors.redAccent, size: 40),
-                                    ),
-                                  ),
-                                ),
+                                ],
                               ),
-                          ],
-                        ) else const Text('صِفْر (لَا شَيْء)', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white)),
+                            ),
+                          )
+                        else if (n.value > 20)
+                          const Text('رَقَم كَبِير!', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white))
+                        else 
+                          const Text('صِفْر (لَا شَيْء)', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white)),
+                        
                         const Spacer(),
                         if (_done) const Icon(Icons.star, size: 80, color: Colors.amber),
                         const Spacer(),
@@ -156,8 +165,10 @@ class _NumberLessonScreenState extends ConsumerState<NumberLessonScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             KidsButton(width: 80, height: 80, color: Colors.blue.shade400, onTap: _start, child: const Icon(Icons.replay, size: 40, color: Colors.white)),
-                            const SizedBox(width: 24),
+                            const SizedBox(width: 16),
                             KidsButton(width: 80, height: 80, color: Colors.purple.shade400, onTap: () => context.push('/numbers/${n.id}/pick'), child: const Icon(Icons.touch_app, size: 40, color: Colors.white)),
+                            const SizedBox(width: 16),
+                            KidsButton(width: 80, height: 80, color: Colors.orange.shade400, onTap: () => context.push('/numbers/${n.id}/count_game'), child: const Icon(Icons.filter_9_plus, size: 40, color: Colors.white)),
                           ],
                         ),
                         const SizedBox(height: 32),

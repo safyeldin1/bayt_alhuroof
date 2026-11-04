@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'dart:ui';
-import 'package:path_drawing/path_drawing.dart';
 
 class StrokeTracker {
   StrokeTracker(this.samples, {this.tolerance = 9});

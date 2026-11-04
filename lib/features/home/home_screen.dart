@@ -73,7 +73,7 @@ class HomeScreen extends StatelessWidget {
                       const Floating(
                         child: BounceIn(
                           child: Text(
-                            'بيت الحروف',
+                            'أول خطوة',
                             style: TextStyle(
                               fontSize: 56,
                               fontWeight: FontWeight.w900,
@@ -87,24 +87,48 @@ class HomeScreen extends StatelessWidget {
                       
                       // الأزرار (عرضية أو طولية)
                       if (isLandscape)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 32,
+                          runSpacing: 24,
                           children: [
                             buildMenuButton('الحروف', 'أ', '/letters', const Color(0xFFFF7043)),
-                            const SizedBox(width: 48),
                             buildMenuButton('الأرقام', '١', '/numbers', const Color(0xFF29B6F6)),
+                            buildMenuButton('الألوان', '🎨', '/colors', const Color(0xFF9C27B0)),
+                            buildMenuButton('الأشكال', '🔺', '/shapes', const Color(0xFF4CAF50)),
+                            buildMenuButton('التلوين', '🖍️', '/coloring', const Color(0xFFFF9800)),
+                            buildMenuButton('المهن', '👷', '/professions', const Color(0xFF607D8B)),
                           ],
                         )
                       else
                         Column(
                           children: [
                             buildMenuButton('الحروف', 'أ', '/letters', const Color(0xFFFF7043)),
-                            const SizedBox(height: 32),
+                            const SizedBox(height: 24),
                             buildMenuButton('الأرقام', '١', '/numbers', const Color(0xFF29B6F6)),
+                            const SizedBox(height: 24),
+                            buildMenuButton('الألوان', '🎨', '/colors', const Color(0xFF9C27B0)),
+                            const SizedBox(height: 24),
+                            buildMenuButton('الأشكال', '🔺', '/shapes', const Color(0xFF4CAF50)),
+                            const SizedBox(height: 24),
+                            buildMenuButton('التلوين', '🖍️', '/coloring', const Color(0xFFFF9800)),
+                            buildMenuButton('المهن', '👷', '/professions', const Color(0xFF607D8B)),
                           ],
                         ),
                     ],
                   ),
+                ),
+              ),
+            ),
+            // الحقوق في الأسفل
+            Positioned(
+              bottom: 4,
+              left: 0,
+              right: 0,
+              child: const Center(
+                child: Text(
+                  'Powered by Safyeldin Abdo © Ghinax',
+                  style: TextStyle(fontSize: 11, color: Colors.white70),
                 ),
               ),
             ),
@@ -115,6 +139,26 @@ class HomeScreen extends StatelessWidget {
               child: SafeArea(
                 child: HoldToOpen(
                   onOpen: () => context.push('/parent-gate'),
+                ),
+              ),
+            ),
+            PositionedDirectional(
+              top: 10,
+              start: 10,
+              child: SafeArea(
+                child: Row(
+                  children: [
+                    IconButton(
+                      iconSize: 40,
+                      icon: const Icon(Icons.emoji_events, color: Colors.amber),
+                      onPressed: () => context.push('/rewards'),
+                    ),
+                    IconButton(
+                      iconSize: 40,
+                      icon: const Icon(Icons.info_outline, color: Colors.white),
+                      onPressed: () => context.push('/about'),
+                    ),
+                  ],
                 ),
               ),
             ),
