@@ -64,6 +64,7 @@ class _ProfessionsChoiceGameState extends ConsumerState<ProfessionsChoiceGame> {
 
   void _initRound() {
     final profession = professions[_currentIndex];
+    ref.read(audioServiceProvider).playVoice('professions/q_${profession.id}', force: true);
     final otherTools = allTools.keys.where((k) => k != profession.toolId).toList()..shuffle();
     setState(() {
       _options = [profession.toolId, ...otherTools.take(2)]..shuffle();
@@ -78,7 +79,7 @@ class _ProfessionsChoiceGameState extends ConsumerState<ProfessionsChoiceGame> {
     final profession = professions[_currentIndex];
     if (toolId == profession.toolId) {
       setState(() { _okId = toolId; _locked = true; });
-      ref.read(audioServiceProvider).playVoice('instructions/right', force: true);
+      ref.read(audioServiceProvider).playSequence(['instructions/right', 'tools/$toolId']);
       await Future.delayed(const Duration(milliseconds: 1000));
       if (_currentIndex < professions.length - 1) {
         setState(() { _currentIndex++; });

@@ -61,11 +61,25 @@ class PickNumberGame extends StatelessWidget {
           ];
           
           return ChoiceGameSetup(
-            instructionText: 'اختر الرقم الصحيح',
+            instructionText: 'عُدَّ العناصر وَاخْتَر الرَّقَم الصَّحِيح',
+            promptBuilder: (ctx, q) {
+              if (q.target.value == 0) {
+                return const Text('لا يوجد شيء', style: TextStyle(fontSize: 24, color: Colors.white));
+              }
+              return Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                children: [
+                  for (var i = 0; i < q.target.value; i++)
+                    const Text('🍎', style: TextStyle(fontSize: 40)),
+                ],
+              );
+            },
             questions: ChoiceEngine<NumberItem>((x) => x.id).build(
               targets: targets,
               pool: repo.numbers,
               rounds: targets.length,
+              promptAudioFor: (target) => target.audio, // 👈 هنا المكان الصح
             ),
           );
         },
@@ -73,7 +87,6 @@ class PickNumberGame extends StatelessWidget {
       );
 }
 
-// لعبة جديدة: مطابقة الصورة بالحرف
 class MatchImageGame extends StatelessWidget {
   const MatchImageGame({super.key, required this.letterId});
   final String letterId;

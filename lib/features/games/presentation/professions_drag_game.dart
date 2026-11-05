@@ -60,6 +60,7 @@ class _ProfessionsDragGameState extends ConsumerState<ProfessionsDragGame> {
 
   void _initRound() {
     final profession = professions[_currentIndex];
+    ref.read(audioServiceProvider).playVoice('professions/q_${profession.id}', force: true);
     final others = allTools.keys.where((k) => k != profession.toolId).toList()..shuffle();
     setState(() {
       _options = [profession.toolId, ...others.take(2)]..shuffle();
@@ -72,7 +73,7 @@ class _ProfessionsDragGameState extends ConsumerState<ProfessionsDragGame> {
     final profession = professions[_currentIndex];
     if (toolId == profession.toolId) {
       setState(() => _locked = true);
-      ref.read(audioServiceProvider).playVoice('instructions/right', force: true);
+      ref.read(audioServiceProvider).playSequence(['instructions/right', 'tools/$toolId']);
       await Future.delayed(const Duration(milliseconds: 1000));
       
       if (_currentIndex < professions.length - 1) {

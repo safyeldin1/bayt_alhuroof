@@ -1,5 +1,5 @@
 # 💻 كود المشروع الكامل
-> آخر تحديث: 2026-11-04 20:58:56
+> آخر تحديث: 2026-11-05 21:48:45
 ```yaml
 name: bayt_alhuroof
 description: "A new Flutter project."
@@ -33,6 +33,7 @@ dev_dependencies:
   drift_dev: ^2.20.3
   build_runner: ^2.4.12
   mocktail: ^1.0.4
+  flutter_launcher_icons: ^0.9.3
 
 flutter:
   uses-material-design: true
@@ -3005,7 +3006,14 @@ import 'dart:math';
 import '../evaluation.dart';
 
 class ChoiceQuestion<T> {
-  const ChoiceQuestion(this.target, this.options, {this.promptAudio, this.promptImage, this.promptText});
+  const ChoiceQuestion(
+    this.target, 
+    this.options, {
+    this.promptAudio, 
+    this.promptImage, 
+    this.promptText,
+  });
+  
   final T target;
   final List<T> options;
   final String? promptAudio;
@@ -3449,11 +3457,25 @@ class PickNumberGame extends StatelessWidget {
           ];
           
           return ChoiceGameSetup(
-            instructionText: 'اختر الرقم الصحيح',
+            instructionText: 'عُدَّ العناصر وَاخْتَر الرَّقَم الصَّحِيح',
+            promptBuilder: (ctx, q) {
+              if (q.target.value == 0) {
+                return const Text('لا يوجد شيء', style: TextStyle(fontSize: 24, color: Colors.white));
+              }
+              return Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                children: [
+                  for (var i = 0; i < q.target.value; i++)
+                    const Text('🍎', style: TextStyle(fontSize: 40)),
+                ],
+              );
+            },
             questions: ChoiceEngine<NumberItem>((x) => x.id).build(
               targets: targets,
               pool: repo.numbers,
               rounds: targets.length,
+              promptAudioFor: (target) => target.audio, // 👈 هنا المكان الصح
             ),
           );
         },
@@ -3461,7 +3483,6 @@ class PickNumberGame extends StatelessWidget {
       );
 }
 
-// لعبة جديدة: مطابقة الصورة بالحرف
 class MatchImageGame extends StatelessWidget {
   const MatchImageGame({super.key, required this.letterId});
   final String letterId;
@@ -4244,6 +4265,7 @@ class _ProfessionsChoiceGameState extends ConsumerState<ProfessionsChoiceGame> {
 
   void _initRound() {
     final profession = professions[_currentIndex];
+    ref.read(audioServiceProvider).playVoice('professions/q_${profession.id}', force: true);
     final otherTools = allTools.keys.where((k) => k != profession.toolId).toList()..shuffle();
     setState(() {
       _options = [profession.toolId, ...otherTools.take(2)]..shuffle();
@@ -4258,7 +4280,7 @@ class _ProfessionsChoiceGameState extends ConsumerState<ProfessionsChoiceGame> {
     final profession = professions[_currentIndex];
     if (toolId == profession.toolId) {
       setState(() { _okId = toolId; _locked = true; });
-      ref.read(audioServiceProvider).playVoice('instructions/right', force: true);
+      ref.read(audioServiceProvider).playSequence(['instructions/right', 'tools/$toolId']);
       await Future.delayed(const Duration(milliseconds: 1000));
       if (_currentIndex < professions.length - 1) {
         setState(() { _currentIndex++; });
@@ -4460,6 +4482,7 @@ class _ProfessionsDragGameState extends ConsumerState<ProfessionsDragGame> {
 
   void _initRound() {
     final profession = professions[_currentIndex];
+    ref.read(audioServiceProvider).playVoice('professions/q_${profession.id}', force: true);
     final others = allTools.keys.where((k) => k != profession.toolId).toList()..shuffle();
     setState(() {
       _options = [profession.toolId, ...others.take(2)]..shuffle();
@@ -4472,7 +4495,7 @@ class _ProfessionsDragGameState extends ConsumerState<ProfessionsDragGame> {
     final profession = professions[_currentIndex];
     if (toolId == profession.toolId) {
       setState(() => _locked = true);
-      ref.read(audioServiceProvider).playVoice('instructions/right', force: true);
+      ref.read(audioServiceProvider).playSequence(['instructions/right', 'tools/$toolId']);
       await Future.delayed(const Duration(milliseconds: 1000));
       
       if (_currentIndex < professions.length - 1) {
@@ -6646,6 +6669,7 @@ class _TracingScreenState extends ConsumerState<TracingScreen> {
 ```dart
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'app.dart';
@@ -6653,6 +6677,10 @@ import 'core/settings/app_settings.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
   try {
     final session = await AudioSession.instance;
     await session.configure(const AudioSessionConfiguration.speech());

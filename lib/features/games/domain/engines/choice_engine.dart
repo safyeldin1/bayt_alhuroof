@@ -2,7 +2,14 @@ import 'dart:math';
 import '../evaluation.dart';
 
 class ChoiceQuestion<T> {
-  const ChoiceQuestion(this.target, this.options, {this.promptAudio, this.promptImage, this.promptText});
+  const ChoiceQuestion(
+    this.target, 
+    this.options, {
+    this.promptAudio, 
+    this.promptImage, 
+    this.promptText,
+  });
+  
   final T target;
   final List<T> options;
   final String? promptAudio;
