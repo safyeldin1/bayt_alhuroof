@@ -23,7 +23,7 @@ class ProfessionsMenu extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Column(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     BounceIn(
@@ -40,7 +40,7 @@ class ProfessionsMenu extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(width: 24),
                     BounceIn(
                       child: KidsButton(
                         color: Colors.blue.shade400,
@@ -55,7 +55,7 @@ class ProfessionsMenu extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(width: 24),
                     BounceIn(
                       child: KidsButton(
                         color: Colors.orange.shade400,

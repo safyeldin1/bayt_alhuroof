@@ -1,5 +1,5 @@
 # 💻 كود المشروع الكامل
-> آخر تحديث: 2026-11-05 21:48:45
+> آخر تحديث: 2026-11-05 22:19:29
 ```yaml
 name: bayt_alhuroof
 description: "A new Flutter project."
@@ -2958,8 +2958,9 @@ class ColorsScreen extends ConsumerWidget {
                   int crossAxisCount = constraints.maxWidth > 600 ? 4 : 2;
                   return GridView.builder(
                     padding: const EdgeInsets.all(16),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
+                    scrollDirection: Axis.horizontal,
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
                       mainAxisSpacing: 16,
                       crossAxisSpacing: 16,
                       childAspectRatio: 1.0,
@@ -3304,50 +3305,70 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
   Widget _board(BuildContext context, ChoiceSession<T> s) {
     final q = s.current;
     final prompt = _setup?.promptBuilder;
-    return SafeArea(
-      child: Column(
+    
+    // تقسيم الشاشة لنصين (يمين ويسار) عشان تناسب الوضع العرضي
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
         children: [
-          const SizedBox(height: 16),
-          if (_setup?.instructionText != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-              child: Text(_setup!.instructionText!, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
-            ),
-          const SizedBox(height: 16),
-          if (prompt != null) prompt(context, q),
-          
-          if (q.promptAudio != null)
-            IconButton.filled(
-              iconSize: 64,
-              onPressed: _playPrompt,
-              icon: const Icon(Icons.volume_up),
-            ),
-          const Spacer(),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              for (final o in q.options)
-                SizedBox(
-                  width: 100,
-                  height: 100,
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: widget.idOf(o) == _okId
-                          ? Colors.green
-                          : (widget.idOf(o) == _wrongId ? Colors.orange.shade300 : Colors.white),
-                      foregroundColor: widget.idOf(o) == _okId || widget.idOf(o) == _wrongId ? Colors.white : const Color(0xFF00796B),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Color(0xFF00796B), width: 3)),
+          // النص الشمال: السؤال والصورة
+          Expanded(
+            flex: 1,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (_setup?.instructionText != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                    child: Text(
+                      _setup!.instructionText!, 
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF00796B)),
+                      textAlign: TextAlign.center,
                     ),
-                    onPressed: () => _onTap(o),
-                    child: widget.optionBuilder(context, ref, o),
                   ),
-                ),
-            ],
+                const SizedBox(height: 16),
+                if (prompt != null) prompt(context, q),
+                const SizedBox(height: 16),
+                if (q.promptAudio != null)
+                  IconButton.filled(
+                    iconSize: 50,
+                    onPressed: _playPrompt,
+                    icon: const Icon(Icons.volume_up),
+                  ),
+              ],
+            ),
           ),
-          const Spacer(),
+          
+          // النص اليمين: الخيارات
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  for (final o in q.options)
+                    SizedBox(
+                      width: 90,
+                      height: 90,
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: widget.idOf(o) == _okId
+                              ? Colors.green
+                              : (widget.idOf(o) == _wrongId ? Colors.orange.shade300 : Colors.white),
+                          foregroundColor: widget.idOf(o) == _okId || widget.idOf(o) == _wrongId ? Colors.white : const Color(0xFF00796B),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Color(0xFF00796B), width: 3)),
+                        ),
+                        onPressed: () => _onTap(o),
+                        child: FittedBox(child: widget.optionBuilder(context, ref, o)),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -4822,7 +4843,7 @@ class ProfessionsMenu extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Column(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     BounceIn(
@@ -4839,7 +4860,7 @@ class ProfessionsMenu extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(width: 24),
                     BounceIn(
                       child: KidsButton(
                         color: Colors.blue.shade400,
@@ -4854,7 +4875,7 @@ class ProfessionsMenu extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(width: 24),
                     BounceIn(
                       child: KidsButton(
                         color: Colors.orange.shade400,
@@ -6278,8 +6299,9 @@ class ShapesScreen extends ConsumerWidget {
                   int crossAxisCount = constraints.maxWidth > 600 ? 4 : 2;
                   return GridView.builder(
                     padding: const EdgeInsets.all(16),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
+                    scrollDirection: Axis.horizontal,
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
                       mainAxisSpacing: 16,
                       crossAxisSpacing: 16,
                       childAspectRatio: 1.0,
@@ -6360,23 +6382,27 @@ class ShapePainter extends CustomPainter {
 ```dart
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/animations/bounce_in.dart';
 import '../../core/widgets/kids_background.dart';
+import '../../providers/audio_providers.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
-
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // الانتقال للشاشة الرئيسية بعد ثانيتين ونصف
-    Timer(const Duration(milliseconds: 2500), () {
+    // تشغيل الموسيقى
+    ref.read(audioServiceProvider).playVoice('music/splash', force: true);
+    
+    // الانتقال للشاشة الرئيسية بعد 4 ثواني (عشان الموسيقى تخلص)
+    Timer(const Duration(seconds: 4), () {
       if (mounted) context.go('/');
     });
   }
@@ -6391,8 +6417,8 @@ class _SplashScreenState extends State<SplashScreen> {
             children: [
               BounceIn(
                 child: Container(
-                  width: 180,
-                  height: 180,
+                  width: 150,
+                  height: 150,
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
@@ -6400,29 +6426,22 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                   child: ClipOval(
                     child: Image.asset(
-                      'assets/images/ui/mascot.png',
+                      'assets/icon/icon.png', // اللوجو الجديد
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.school, size: 100, color: Colors.blue),
+                      errorBuilder: (_, __, ___) => const Icon(Icons.star, size: 80, color: Colors.amber),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
               const BounceIn(
                 child: Text(
                   'أول خطوة',
-                  style: TextStyle(
-                    fontSize: 56,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    shadows: [Shadow(color: Color(0xFF00796B), offset: Offset(4, 4), blurRadius: 0)],
-                  ),
+                  style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 32),
               const CircularProgressIndicator(color: Colors.white),
-              const SizedBox(height: 24),
-              const Text('Powered by Safyeldin Abdo © Ghinax', style: TextStyle(fontSize: 11, color: Colors.white70)),
             ],
           ),
         ),

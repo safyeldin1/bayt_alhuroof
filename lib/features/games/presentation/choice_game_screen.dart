@@ -212,50 +212,70 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
   Widget _board(BuildContext context, ChoiceSession<T> s) {
     final q = s.current;
     final prompt = _setup?.promptBuilder;
-    return SafeArea(
-      child: Column(
+    
+    // تقسيم الشاشة لنصين (يمين ويسار) عشان تناسب الوضع العرضي
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
         children: [
-          const SizedBox(height: 16),
-          if (_setup?.instructionText != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-              child: Text(_setup!.instructionText!, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
-            ),
-          const SizedBox(height: 16),
-          if (prompt != null) prompt(context, q),
-          
-          if (q.promptAudio != null)
-            IconButton.filled(
-              iconSize: 64,
-              onPressed: _playPrompt,
-              icon: const Icon(Icons.volume_up),
-            ),
-          const Spacer(),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              for (final o in q.options)
-                SizedBox(
-                  width: 100,
-                  height: 100,
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: widget.idOf(o) == _okId
-                          ? Colors.green
-                          : (widget.idOf(o) == _wrongId ? Colors.orange.shade300 : Colors.white),
-                      foregroundColor: widget.idOf(o) == _okId || widget.idOf(o) == _wrongId ? Colors.white : const Color(0xFF00796B),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Color(0xFF00796B), width: 3)),
+          // النص الشمال: السؤال والصورة
+          Expanded(
+            flex: 1,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (_setup?.instructionText != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                    child: Text(
+                      _setup!.instructionText!, 
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF00796B)),
+                      textAlign: TextAlign.center,
                     ),
-                    onPressed: () => _onTap(o),
-                    child: widget.optionBuilder(context, ref, o),
                   ),
-                ),
-            ],
+                const SizedBox(height: 16),
+                if (prompt != null) prompt(context, q),
+                const SizedBox(height: 16),
+                if (q.promptAudio != null)
+                  IconButton.filled(
+                    iconSize: 50,
+                    onPressed: _playPrompt,
+                    icon: const Icon(Icons.volume_up),
+                  ),
+              ],
+            ),
           ),
-          const Spacer(),
+          
+          // النص اليمين: الخيارات
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  for (final o in q.options)
+                    SizedBox(
+                      width: 90,
+                      height: 90,
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: widget.idOf(o) == _okId
+                              ? Colors.green
+                              : (widget.idOf(o) == _wrongId ? Colors.orange.shade300 : Colors.white),
+                          foregroundColor: widget.idOf(o) == _okId || widget.idOf(o) == _wrongId ? Colors.white : const Color(0xFF00796B),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Color(0xFF00796B), width: 3)),
+                        ),
+                        onPressed: () => _onTap(o),
+                        child: FittedBox(child: widget.optionBuilder(context, ref, o)),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
