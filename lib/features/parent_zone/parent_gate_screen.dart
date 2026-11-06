@@ -32,7 +32,9 @@ class _ParentGateScreenState extends ConsumerState<ParentGateScreen> {
 
     return Scaffold(
       body: KidsBackground(
-        child: Center(
+        child: Stack(
+          children: [
+            Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -76,6 +78,18 @@ class _ParentGateScreenState extends ConsumerState<ParentGateScreen> {
               ],
             ),
           ),
+            ),
+            PositionedDirectional(
+              top: 10, start: 10,
+              child: SafeArea(
+                child: IconButton(
+                  iconSize: 30,
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => context.go('/'),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

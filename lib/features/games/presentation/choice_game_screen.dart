@@ -91,7 +91,6 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
         });
         ref.read(audioServiceProvider).playVoice('instructions/right', force: true);
         
-        // نستنى شوية عشان الصوت والرسالة يظهروا
         await Future.delayed(const Duration(milliseconds: 2000));
         if (!mounted) return;
         
@@ -176,23 +175,25 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
       body: KidsBackground(
         child: Stack(
           children: [
-            Column(
-              children: [
-                AppBar(
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  leading: IconButton(iconSize: 36, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go(widget.backRoute)),
-                  title: s == null ? null : Text('سؤال ${s.index + 1} من ${s.questions.length}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                  centerTitle: true,
-                ),
-                Expanded(
-                  child: s == null
-                      ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                      : s.finished
-                          ? _Result(stars: s.stars, onReplay: () { setState(() => _session = null); _init(); }, onBack: () => context.go(widget.backRoute))
-                          : _board(context, s),
-                ),
-              ],
+            SafeArea(
+              child: Column(
+                children: [
+                  AppBar(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    leading: IconButton(iconSize: 30, icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go(widget.backRoute)),
+                    title: s == null ? null : Text('سؤال ${s.index + 1} من ${s.questions.length}', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                    centerTitle: true,
+                  ),
+                  Expanded(
+                    child: s == null
+                        ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                        : s.finished
+                            ? _Result(stars: s.stars, onReplay: () { setState(() => _session = null); _init(); }, onBack: () => context.go(widget.backRoute))
+                            : _board(context, s),
+                  ),
+                ],
+              ),
             ),
             
             // الرسالة المنبثقة
@@ -213,9 +214,9 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
     final q = s.current;
     final prompt = _setup?.promptBuilder;
     
-    // تقسيم الشاشة لنصين (يمين ويسار) عشان تناسب الوضع العرضي
+    // تقسيم الشاشة لنصين (يمين ويسار) عشان مفيش سكرول لتحت
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
           // النص الشمال: السؤال والصورة
@@ -226,20 +227,23 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
               children: [
                 if (_setup?.instructionText != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-                    child: Text(
-                      _setup!.instructionText!, 
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF00796B)),
-                      textAlign: TextAlign.center,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        _setup!.instructionText!, 
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF00796B)),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
                 const SizedBox(height: 16),
-                if (prompt != null) prompt(context, q),
+                if (prompt != null) Expanded(child: Center(child: prompt(context, q))),
                 const SizedBox(height: 16),
                 if (q.promptAudio != null)
                   IconButton.filled(
-                    iconSize: 50,
+                    iconSize: 40,
                     onPressed: _playPrompt,
                     icon: const Icon(Icons.volume_up),
                   ),
@@ -262,6 +266,7 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
                       height: 90,
                       child: FilledButton(
                         style: FilledButton.styleFrom(
+                          padding: EdgeInsets.zero,
                           backgroundColor: widget.idOf(o) == _okId
                               ? Colors.green
                               : (widget.idOf(o) == _wrongId ? Colors.orange.shade300 : Colors.white),
@@ -269,7 +274,7 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Color(0xFF00796B), width: 3)),
                         ),
                         onPressed: () => _onTap(o),
-                        child: FittedBox(child: widget.optionBuilder(context, ref, o)),
+                        child: FittedBox(fit: BoxFit.scaleDown, child: widget.optionBuilder(context, ref, o)),
                       ),
                     ),
                 ],
@@ -301,7 +306,7 @@ class _Result extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     for (var i = 0; i < stars; i++)
-                      const Icon(Icons.star, size: 80, color: Colors.amber),
+                      const Icon(Icons.star, size: 60, color: Colors.amber),
                   ],
                 ),
               ],
@@ -310,9 +315,9 @@ class _Result extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton.filled(iconSize: 64, onPressed: onReplay, icon: const Icon(Icons.replay)),
+                IconButton.filled(iconSize: 50, onPressed: onReplay, icon: const Icon(Icons.replay)),
                 const SizedBox(width: 32),
-                IconButton.filled(iconSize: 64, onPressed: onBack, icon: const Icon(Icons.check)),
+                IconButton.filled(iconSize: 50, onPressed: onBack, icon: const Icon(Icons.check)),
               ],
             ),
           ],

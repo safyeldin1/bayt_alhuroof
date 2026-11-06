@@ -1,5 +1,5 @@
 # 💻 كود المشروع الكامل
-> آخر تحديث: 2026-11-05 22:19:29
+> آخر تحديث: 2026-11-06 15:11:59
 ```yaml
 name: bayt_alhuroof
 description: "A new Flutter project."
@@ -25,6 +25,7 @@ dependencies:
   path_provider: ^2.1.4
   intl: ^0.20.3
   path: ^1.9.1
+  just_audio_media_kit: ^2.1.0
 
 dev_dependencies:
   flutter_test:
@@ -33,7 +34,6 @@ dev_dependencies:
   drift_dev: ^2.20.3
   build_runner: ^2.4.12
   mocktail: ^1.0.4
-  flutter_launcher_icons: ^0.9.3
 
 flutter:
   uses-material-design: true
@@ -56,10 +56,20 @@ flutter:
 ## 📄 `lib/app.dart`
 ```dart
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+
+class AppScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse, // بيسمحلك تسحب بالماوس
+        PointerDeviceKind.trackpad,
+      };
+}
 
 class BaytApp extends ConsumerWidget {
   const BaytApp({super.key});
@@ -68,7 +78,7 @@ class BaytApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
-      title: 'بيت الحروف',
+      title: 'أول خطوة',
       debugShowCheckedModeBanner: false,
       locale: const Locale('ar'),
       supportedLocales: const [Locale('ar')],
@@ -79,6 +89,7 @@ class BaytApp extends ConsumerWidget {
       ],
       theme: AppTheme.light,
       routerConfig: router,
+      scrollBehavior: AppScrollBehavior(), // تفعيل السحب بالماوس
     );
   }
 }
@@ -248,63 +259,47 @@ class _StarBurstState extends State<StarBurst> with SingleTickerProviderStateMix
 ```
 ## 📄 `lib/core/audio/audio_service.dart`
 ```dart
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 
 class AudioService {
   final AudioPlayer _voice = AudioPlayer();
   double voiceVolume = 1.0;
-  DateTime _lastTap = DateTime.fromMillisecondsSinceEpoch(0);
-  int _token = 0;
-
-  static const _debounce = Duration(milliseconds: 250);
 
   Future<void> playVoice(String ref, {bool force = false}) async {
-    final now = DateTime.now();
-    if (!force && now.difference(_lastTap) < _debounce) return;
-    _lastTap = now;
-    final myToken = ++_token;
-    await _playOne(ref, myToken);
-  }
+    try {
+      final assetPath = 'assets/audio/$ref.m4a';
+      debugPrint('🔊 [محاولة تشغيل]: $assetPath');
+      
+      // لو إحنا على لينكس، بنتجاهل التشغيل الفعلي عشان التطبيق ميهنجش
+      if (Platform.isLinux) {
+        debugPrint('⚠️ [لينكس]: تم تجاهل التشغيل الفعلي (لتجنب التعليق)، الصوت سيعمل على الموبايل.');
+        return;
+      }
 
-  Future<void> playSequence(List<String> refs) async {
-    final myToken = ++_token;
-    for (final ref in refs) {
-      if (myToken != _token) return;
-      await _playOne(ref, myToken);
+      await _voice.stop();
+      await _voice.setAsset(assetPath);
+      await _voice.setVolume(voiceVolume);
+      _voice.play();
+    } catch (e) {
+      debugPrint('❌ خطأ في الصوت ($ref): $e');
     }
   }
 
-  Future<void> _playOne(String ref, int token) async {
-    try {
-      await _voice.stop();
-      if (token != _token) return;
-      await _voice.setAsset('assets/audio/$ref.m4a');
-      await _voice.setVolume(voiceVolume);
-      await _voice.play();
-    } on MissingPluginException {
-      debugPrint('⚠️ الصوت غير مدعوم على هذه المنصة (لينكس)، وسيعمل على أندرويد');
-    } catch (e) {
-      debugPrint('audio error ($ref): $e');
+  Future<void> playSequence(List<String> refs) async {
+    for (final ref in refs) {
+      await playVoice(ref, force: true);
+      await Future.delayed(const Duration(milliseconds: 800));
     }
   }
 
   Future<void> stop() async {
-    _token++;
-    try {
-      await _voice.stop();
-    } on MissingPluginException {
-      // تجاهل على لينكس
-    } catch (e) {
-      debugPrint('audio stop error: $e');
-    }
+    try { await _voice.stop(); } catch (_) {}
   }
 
   Future<void> dispose() async {
-    try {
-      await _voice.dispose();
-    } catch (_) {}
+    try { await _voice.dispose(); } catch (_) {}
   }
 }
 ```
@@ -2496,47 +2491,52 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: KidsBackground(
-        child: Column(
-          children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
-              title: const Text('حول التطبيق', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
-              centerTitle: true,
-            ),
-            Expanded(
-              child: Center(
-                child: BounceIn(
-                  child: Container(
-                    margin: const EdgeInsets.all(24),
-                    padding: const EdgeInsets.all(32),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(40),
-                      boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, 10))],
-                    ),
-                    child: const Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.school, size: 100, color: Colors.orange),
-                        SizedBox(height: 16),
-                        Text('أول خطوة', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
-                        SizedBox(height: 8),
-                        Text('الإصدار 1.0.0', style: TextStyle(fontSize: 16, color: Colors.grey)),
-                        SizedBox(height: 24),
-                        Divider(),
-                        SizedBox(height: 16),
-                        Text('تطبيق تعليمي للأطفال لتعلم الحروف والأرقام والألوان والأشكال والمهن.', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
-                        SizedBox(height: 24),
-                        Text('Powered by Safyeldin Abdo © Ghinax', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
-                      ],
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(iconSize: 40, icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/')),
+                title: const Text('حول التطبيق', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+                centerTitle: true,
+              ),
+              Expanded(
+                child: Center(
+                  // أضفنا SingleChildScrollView عشان نمنع أي Overflow
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: BounceIn(
+                      child: Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(40),
+                          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, 10))],
+                        ),
+                        child: const Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.school, size: 100, color: Colors.orange),
+                            SizedBox(height: 16),
+                            Text('أول خطوة', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                            SizedBox(height: 8),
+                            Text('الإصدار 1.0.0', style: TextStyle(fontSize: 16, color: Colors.grey)),
+                            SizedBox(height: 24),
+                            Divider(),
+                            SizedBox(height: 16),
+                            Text('تطبيق تعليمي للأطفال لتعلم الحروف والأرقام والألوان والأشكال والمهن.', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+                            SizedBox(height: 24),
+                            Text('Powered by Safyeldin Abdo © Ghinax', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -2572,7 +2572,7 @@ class ColoringGallery extends ConsumerWidget {
             AppBar(
               backgroundColor: Colors.transparent,
               elevation: 0,
-              leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
+              leading: IconButton(iconSize: 40, icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/')),
               title: const Text('التلوين', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
               centerTitle: true,
             ),
@@ -2936,7 +2936,7 @@ class ColorsScreen extends ConsumerWidget {
             AppBar(
               backgroundColor: Colors.transparent,
               elevation: 0,
-              leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
+              leading: IconButton(iconSize: 40, icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/')),
               title: const Text('الألوان', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
               centerTitle: true,
             ),
@@ -3184,7 +3184,6 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
         });
         ref.read(audioServiceProvider).playVoice('instructions/right', force: true);
         
-        // نستنى شوية عشان الصوت والرسالة يظهروا
         await Future.delayed(const Duration(milliseconds: 2000));
         if (!mounted) return;
         
@@ -3269,23 +3268,25 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
       body: KidsBackground(
         child: Stack(
           children: [
-            Column(
-              children: [
-                AppBar(
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  leading: IconButton(iconSize: 36, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go(widget.backRoute)),
-                  title: s == null ? null : Text('سؤال ${s.index + 1} من ${s.questions.length}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                  centerTitle: true,
-                ),
-                Expanded(
-                  child: s == null
-                      ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                      : s.finished
-                          ? _Result(stars: s.stars, onReplay: () { setState(() => _session = null); _init(); }, onBack: () => context.go(widget.backRoute))
-                          : _board(context, s),
-                ),
-              ],
+            SafeArea(
+              child: Column(
+                children: [
+                  AppBar(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    leading: IconButton(iconSize: 30, icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go(widget.backRoute)),
+                    title: s == null ? null : Text('سؤال ${s.index + 1} من ${s.questions.length}', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                    centerTitle: true,
+                  ),
+                  Expanded(
+                    child: s == null
+                        ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                        : s.finished
+                            ? _Result(stars: s.stars, onReplay: () { setState(() => _session = null); _init(); }, onBack: () => context.go(widget.backRoute))
+                            : _board(context, s),
+                  ),
+                ],
+              ),
             ),
             
             // الرسالة المنبثقة
@@ -3306,9 +3307,9 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
     final q = s.current;
     final prompt = _setup?.promptBuilder;
     
-    // تقسيم الشاشة لنصين (يمين ويسار) عشان تناسب الوضع العرضي
+    // تقسيم الشاشة لنصين (يمين ويسار) عشان مفيش سكرول لتحت
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
           // النص الشمال: السؤال والصورة
@@ -3319,20 +3320,23 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
               children: [
                 if (_setup?.instructionText != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-                    child: Text(
-                      _setup!.instructionText!, 
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF00796B)),
-                      textAlign: TextAlign.center,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        _setup!.instructionText!, 
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF00796B)),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
                 const SizedBox(height: 16),
-                if (prompt != null) prompt(context, q),
+                if (prompt != null) Expanded(child: Center(child: prompt(context, q))),
                 const SizedBox(height: 16),
                 if (q.promptAudio != null)
                   IconButton.filled(
-                    iconSize: 50,
+                    iconSize: 40,
                     onPressed: _playPrompt,
                     icon: const Icon(Icons.volume_up),
                   ),
@@ -3355,6 +3359,7 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
                       height: 90,
                       child: FilledButton(
                         style: FilledButton.styleFrom(
+                          padding: EdgeInsets.zero,
                           backgroundColor: widget.idOf(o) == _okId
                               ? Colors.green
                               : (widget.idOf(o) == _wrongId ? Colors.orange.shade300 : Colors.white),
@@ -3362,7 +3367,7 @@ class _ChoiceGameScreenState<T> extends ConsumerState<ChoiceGameScreen<T>> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: Color(0xFF00796B), width: 3)),
                         ),
                         onPressed: () => _onTap(o),
-                        child: FittedBox(child: widget.optionBuilder(context, ref, o)),
+                        child: FittedBox(fit: BoxFit.scaleDown, child: widget.optionBuilder(context, ref, o)),
                       ),
                     ),
                 ],
@@ -3394,7 +3399,7 @@ class _Result extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     for (var i = 0; i < stars; i++)
-                      const Icon(Icons.star, size: 80, color: Colors.amber),
+                      const Icon(Icons.star, size: 60, color: Colors.amber),
                   ],
                 ),
               ],
@@ -3403,9 +3408,9 @@ class _Result extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton.filled(iconSize: 64, onPressed: onReplay, icon: const Icon(Icons.replay)),
+                IconButton.filled(iconSize: 50, onPressed: onReplay, icon: const Icon(Icons.replay)),
                 const SizedBox(width: 32),
-                IconButton.filled(iconSize: 64, onPressed: onBack, icon: const Icon(Icons.check)),
+                IconButton.filled(iconSize: 50, onPressed: onBack, icon: const Icon(Icons.check)),
               ],
             ),
           ],
@@ -3677,7 +3682,6 @@ class _CountingGameState extends ConsumerState<CountingGame> {
       _counted.add(index);
     });
 
-    // تشغيل صوت الرقم اللي اتعد
     final repo = ref.read(contentRepositoryProvider).valueOrNull;
     if (repo != null) {
       final spokenNumber = repo.numberByValue(_counted.length);
@@ -3686,7 +3690,6 @@ class _CountingGameState extends ConsumerState<CountingGame> {
       }
     }
 
-    // لو خلص العد
     if (_counted.length == _number!.value) {
       setState(() => _isFinished = true);
       ref.read(progressRepositoryProvider).recordResult(
@@ -3704,23 +3707,25 @@ class _CountingGameState extends ConsumerState<CountingGame> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: KidsBackground(
-        child: Column(
-          children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(iconSize: 36, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go('/numbers/${widget.numberId}')),
-              title: const Text('عُدَّ العناصر', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
-              centerTitle: true,
-            ),
-            Expanded(
-              child: _isLoading 
-                ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                : _isFinished
-                  ? _buildResult()
-                  : _buildGameBoard(),
-            ),
-          ],
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(iconSize: 36, icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/numbers/${widget.numberId}')),
+                title: const Text('عُدَّ العناصر', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                centerTitle: true,
+              ),
+              Expanded(
+                child: _isLoading 
+                  ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                  : _isFinished
+                    ? _buildResult()
+                    : _buildGameBoard(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -3731,44 +3736,57 @@ class _CountingGameState extends ConsumerState<CountingGame> {
     final targetCount = _number!.value;
 
     return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
         children: [
-          // الرقم المطلوب
-          Container(
-            width: 120, height: 120,
-            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)]),
-            child: Center(
-              child: Text(formatNumber(targetCount, style), style: const TextStyle(fontSize: 70, fontWeight: FontWeight.bold, color: Color(0xFF29B6F6))),
+          // النص الشمال: الرقم
+          Expanded(
+            flex: 1,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 120, height: 120,
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)]),
+                  child: Center(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(formatNumber(targetCount, style), style: const TextStyle(fontSize: 70, fontWeight: FontWeight.bold, color: Color(0xFF29B6F6))),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('اضغط على $targetCount عناصر', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          Text('اضغط على $targetCount عناصر', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-          const SizedBox(height: 24),
           
-          // العناصر
+          // النص اليمين: العناصر
           Expanded(
-            child: SingleChildScrollView(
+            flex: 2,
+            child: Center(
               child: Wrap(
                 alignment: WrapAlignment.center,
                 spacing: 12,
                 runSpacing: 12,
                 children: [
-                  // هنعرض عناصر أكتر من الرقم عشان الطفل يعد بنفسه
                   for (var i = 0; i < targetCount + 3; i++)
                     GestureDetector(
                       onTap: () => _onTapObject(i),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
-                        width: 80, height: 80,
+                        width: 70, height: 70,
                         decoration: BoxDecoration(
                           color: _counted.contains(i) ? Colors.green.shade100 : Colors.white,
                           shape: BoxShape.circle,
-                          border: Border.all(color: _counted.contains(i) ? Colors.green : Colors.grey.shade300, width: 4),
+                          border: Border.all(color: _counted.contains(i) ? Colors.green : Colors.grey.shade300, width: 3),
                           boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
                         ),
                         child: Center(
-                          child: Text(_counted.contains(i) ? '✅' : '🍎', style: const TextStyle(fontSize: 40)),
+                          child: FittedBox(child: Text(_counted.contains(i) ? '✅' : '🍎', style: const TextStyle(fontSize: 35))),
                         ),
                       ),
                     ),
@@ -3789,14 +3807,17 @@ class _CountingGameState extends ConsumerState<CountingGame> {
         children: [
           const StarBurst(stars: 3),
           const SizedBox(height: 16),
-          Text('أحسنت! لقد عددت ${formatNumber(_number!.value, style)} بشكل صحيح', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-          const SizedBox(height: 32),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text('أحسنت! لقد عددت ${formatNumber(_number!.value, style)} بشكل صحيح', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+          ),
+          const SizedBox(height: 24),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton.filled(iconSize: 64, onPressed: _initGame, icon: const Icon(Icons.replay)),
-              const SizedBox(width: 32),
-              IconButton.filled(iconSize: 64, onPressed: () => context.go('/numbers/${widget.numberId}'), icon: const Icon(Icons.check)),
+              IconButton.filled(iconSize: 50, onPressed: _initGame, icon: const Icon(Icons.replay)),
+              const SizedBox(width: 24),
+              IconButton.filled(iconSize: 50, onPressed: () => context.go('/numbers/${widget.numberId}'), icon: const Icon(Icons.check)),
             ],
           ),
         ],
@@ -3833,6 +3854,7 @@ class _DragMatchGameState extends ConsumerState<DragMatchGame> {
   bool _isLoading = true;
   bool _isFinished = false;
   int _wrongAttempts = 0;
+  String? _draggedLetterId;
 
   @override
   void initState() {
@@ -3842,14 +3864,13 @@ class _DragMatchGameState extends ConsumerState<DragMatchGame> {
 
   Future<void> _initGame() async {
     final repo = await ref.read(contentRepositoryProvider.future);
-    // جلب 3 كلمات عشوائية (شاملة كلمة الحرف الحالي)
     final targetLetter = repo.letterById(widget.letterId);
     if (targetLetter == null) return;
 
     final targetWord = repo.wordById(targetLetter.primaryWordId);
     if (targetWord == null) return;
 
-    // جلب كلمتين إضافيتين من حروف أخرى
+    // جلب 3 كلمات عشوائية (شاملة كلمة الحرف الحالي)
     final otherWords = repo.words.where((w) => w.id != targetWord.id).toList()..shuffle();
     final selectedWords = [targetWord, ...otherWords.take(2)];
 
@@ -3861,18 +3882,18 @@ class _DragMatchGameState extends ConsumerState<DragMatchGame> {
       _options = selectedLetters;
       _matched = {for (var w in _words) w.id: false};
       _isLoading = false;
+      _isFinished = false;
+      _wrongAttempts = 0;
     });
   }
 
   void _onDragAccepted(Word word, Letter letter) {
     if (word.startsWithLetterId == letter.id) {
-      // إجابة صحيحة
       setState(() {
         _matched[word.id] = true;
       });
       ref.read(audioServiceProvider).playVoice(letter.soundAudio, force: true);
       
-      // التحقق من الفوز
       if (_matched.values.every((v) => v == true)) {
         setState(() => _isFinished = true);
         ref.read(progressRepositoryProvider).recordResult(
@@ -3885,8 +3906,8 @@ class _DragMatchGameState extends ConsumerState<DragMatchGame> {
         );
       }
     } else {
-      // إجابة خاطئة
       setState(() => _wrongAttempts++);
+      ref.read(audioServiceProvider).playVoice('instructions/try_again', force: true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('حاول مرة أخرى!'), duration: Duration(milliseconds: 500)),
       );
@@ -3897,107 +3918,120 @@ class _DragMatchGameState extends ConsumerState<DragMatchGame> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: KidsBackground(
-        child: Column(
-          children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(iconSize: 36, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go('/letters/${widget.letterId}')),
-              title: const Text('اسحب الحرف للصورة الصح', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-              centerTitle: true,
-            ),
-            Expanded(
-              child: _isLoading 
-                ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                : _isFinished
-                  ? _buildResult()
-                  : _buildGameBoard(),
-            ),
-          ],
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(iconSize: 36, icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/letters/${widget.letterId}')),
+                title: const Text('اسحب الحرف للصورة الصح', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                centerTitle: true,
+              ),
+              Expanded(
+                child: _isLoading 
+                  ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                  : _isFinished
+                    ? _buildResult()
+                    : _buildGameBoard(),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildGameBoard() {
-    return Column(
-      children: [
-        const SizedBox(height: 20),
-        // منطقة الصور (أهداف السحب)
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: _words.map((word) {
-            final isMatched = _matched[word.id] ?? false;
-            return DragTarget<Letter>(
-              onAcceptWithDetails: (details) => _onDragAccepted(word, details.data),
-              builder: (context, candidateData, rejectedData) {
-                return Container(
-                  width: 100,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: isMatched ? Colors.green.shade100 : Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: isMatched ? Colors.green : Colors.grey.shade300, width: 3),
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(word.emoji, style: const TextStyle(fontSize: 50)),
-                      Text(word.text, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
-                      if (isMatched) const Icon(Icons.check_circle, color: Colors.green, size: 24),
-                    ],
-                  ),
-                );
-              },
-            );
-          }).toList(),
-        ),
-        const Spacer(),
-        // منطقة الحروف (الأشياء اللي بتتسحب)
-        Wrap(
-          spacing: 20,
-          runSpacing: 20,
-          alignment: WrapAlignment.center,
-          children: _options.map((letter) {
-            // لو الحرف ده اتسحب صح، نخفيه
-            final isUsed = _words.any((w) => w.startsWithLetterId == letter.id && _matched[w.id] == true);
-            if (isUsed) return const SizedBox(width: 80, height: 80); // مساحة فاضية عشان التصميم ميبوظش
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        children: [
+          // النص الشمال: الصور (أهداف السحب)
+          Expanded(
+            flex: 1,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('اسحب الحرف إلى الصورة الصحيحة', style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: _words.map((word) {
+                    final isMatched = _matched[word.id] ?? false;
+                    return DragTarget<Letter>(
+                      onAcceptWithDetails: (details) => _onDragAccepted(word, details.data),
+                      builder: (context, candidateData, rejectedData) {
+                        return Container(
+                          width: 100,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: isMatched ? Colors.green.shade100 : Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: isMatched ? Colors.green : Colors.grey.shade300, width: 3),
+                            boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(child: FittedBox(fit: BoxFit.scaleDown, child: Text(word.emoji, style: const TextStyle(fontSize: 50)))),
+                              FittedBox(fit: BoxFit.scaleDown, child: Text(word.text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF00796B)))),
+                              if (isMatched) const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+          
+          // النص اليمين: الحروف (اللي بتتسحب)
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                alignment: WrapAlignment.center,
+                children: _options.map((letter) {
+                  final isUsed = _words.any((w) => w.startsWithLetterId == letter.id && _matched[w.id] == true);
+                  if (isUsed) return const SizedBox(width: 80, height: 80);
 
-            return Draggable<Letter>(
-              data: letter,
-              feedback: Material(
-                color: Colors.transparent,
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(color: Colors.orange.shade400, borderRadius: BorderRadius.circular(20)),
-                  child: Center(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white))),
-                ),
+                  return Draggable<Letter>(
+                    data: letter,
+                    onDragStarted: () => setState(() => _draggedLetterId = letter.id),
+                    onDragEnd: (_) => setState(() => _draggedLetterId = null),
+                    onDraggableCanceled: (_, __) => setState(() => _draggedLetterId = null),
+                    feedback: Material(
+                      color: Colors.transparent,
+                      child: Container(
+                        width: 80, height: 80,
+                        decoration: BoxDecoration(color: Colors.orange.shade400, borderRadius: BorderRadius.circular(20)),
+                        child: Center(child: FittedBox(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white)))),
+                      ),
+                    ),
+                    childWhenDragging: _draggedLetterId == letter.id ? const SizedBox(width: 80, height: 80) : null,
+                    child: Container(
+                      width: 80, height: 80,
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade400,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))],
+                      ),
+                      child: Center(child: FittedBox(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white)))),
+                    ),
+                  );
+                }).toList(),
               ),
-              childWhenDragging: Opacity(
-                opacity: 0.3,
-                child: Container(
-                  width: 80, height: 80,
-                  decoration: BoxDecoration(color: Colors.orange.shade400, borderRadius: BorderRadius.circular(20)),
-                  child: Center(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white))),
-                ),
-              ),
-              child: Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade400,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))],
-                ),
-                child: Center(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white))),
-              ),
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: 80),
-      ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -4012,16 +4046,16 @@ class _DragMatchGameState extends ConsumerState<DragMatchGame> {
             mainAxisSize: MainAxisSize.min,
             children: [
               for (var i = 0; i < stars; i++)
-                const Icon(Icons.star, size: 80, color: Colors.amber),
+                const Icon(Icons.star, size: 60, color: Colors.amber),
             ],
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton.filled(iconSize: 64, onPressed: () { setState(() { _isLoading = true; _isFinished = false; _wrongAttempts = 0; }); _initGame(); }, icon: const Icon(Icons.replay)),
-              const SizedBox(width: 32),
-              IconButton.filled(iconSize: 64, onPressed: () => context.go('/letters/${widget.letterId}'), icon: const Icon(Icons.check)),
+              IconButton.filled(iconSize: 50, onPressed: () { setState(() { _isLoading = true; _isFinished = false; _wrongAttempts = 0; }); _initGame(); }, icon: const Icon(Icons.replay)),
+              const SizedBox(width: 24),
+              IconButton.filled(iconSize: 50, onPressed: () => context.go('/letters/${widget.letterId}'), icon: const Icon(Icons.check)),
             ],
           ),
         ],
@@ -4104,95 +4138,113 @@ class _LetterShadowGameState extends ConsumerState<LetterShadowGame> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: KidsBackground(
-        child: Column(
-          children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(iconSize: 36, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go('/letters')),
-              title: const Text('طابق الحروف', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
-              centerTitle: true,
-            ),
-            Expanded(
-              child: _isLoading 
-                ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                : _isFinished 
-                  ? _buildResult() 
-                  : _buildGameBoard(),
-            ),
-          ],
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(iconSize: 36, icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/letters')),
+                title: const Text('طابق الحروف', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                centerTitle: true,
+              ),
+              Expanded(
+                child: _isLoading 
+                  ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                  : _isFinished 
+                    ? _buildResult() 
+                    : _buildGameBoard(),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildGameBoard() {
-    return Column(
-      children: [
-        const SizedBox(height: 20),
-        const Text('اسحب الحرف وضعه على ظله', style: TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: _targetLetters.map((letter) {
-            final isMatched = _matched[letter.id] ?? false;
-            return DragTarget<Letter>(
-              onAcceptWithDetails: (details) => _onDragAccepted(letter.id, details.data),
-              builder: (context, candidateData, rejectedData) {
-                return Container(
-                  width: 100, height: 100,
-                  decoration: BoxDecoration(
-                    color: isMatched ? Colors.green.shade100 : Colors.white24,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: isMatched ? Colors.green : Colors.white, width: 3),
-                  ),
-                  child: Center(
-                    child: isMatched 
-                      ? const Icon(Icons.check_circle, color: Colors.green, size: 60)
-                      : Text(letter.character, style: TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Colors.grey.shade400)),
-                  ),
-                );
-              },
-            );
-          }).toList(),
-        ),
-        const Spacer(),
-        Wrap(
-          spacing: 20,
-          runSpacing: 20,
-          alignment: WrapAlignment.center,
-          children: _options.map((letter) {
-            final isUsed = _matched[letter.id] == true;
-            if (isUsed) return const SizedBox(width: 80, height: 80);
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        children: [
+          // النص الشمال: الأشكال المفرغة (الهدف)
+          Expanded(
+            flex: 1,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('اسحب الحرف إلى ظله', style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: _targetLetters.map((letter) {
+                    final isMatched = _matched[letter.id] ?? false;
+                    return DragTarget<Letter>(
+                      onAcceptWithDetails: (details) => _onDragAccepted(letter.id, details.data),
+                      builder: (context, candidateData, rejectedData) {
+                        return Container(
+                          width: 80, height: 80,
+                          decoration: BoxDecoration(
+                            color: isMatched ? Colors.green.shade100 : Colors.white24,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: isMatched ? Colors.green : Colors.white, width: 3),
+                          ),
+                          child: Center(
+                            child: isMatched 
+                              ? const Icon(Icons.check_circle, color: Colors.green, size: 50)
+                              : FittedBox(child: Text(letter.character, style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.grey.shade400))),
+                          ),
+                        );
+                      },
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+          
+          // النص اليمين: الحروف الملونة (اللي بتتسحب)
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                alignment: WrapAlignment.center,
+                children: _options.map((letter) {
+                  final isUsed = _matched[letter.id] == true;
+                  if (isUsed) return const SizedBox(width: 80, height: 80);
 
-            return Draggable<Letter>(
-              data: letter,
-              onDragStarted: () => setState(() => _draggedLetterId = letter.id),
-              onDragEnd: (_) => setState(() => _draggedLetterId = null),
-              onDraggableCanceled: (_, __) => setState(() => _draggedLetterId = null),
-              feedback: Material(
-                color: Colors.transparent,
-                child: Container(
-                  width: 80, height: 80,
-                  decoration: BoxDecoration(color: Colors.orange.shade400, borderRadius: BorderRadius.circular(20)),
-                  child: Center(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white))),
-                ),
+                  return Draggable<Letter>(
+                    data: letter,
+                    onDragStarted: () => setState(() => _draggedLetterId = letter.id),
+                    onDragEnd: (_) => setState(() => _draggedLetterId = null),
+                    onDraggableCanceled: (_, __) => setState(() => _draggedLetterId = null),
+                    feedback: Material(
+                      color: Colors.transparent,
+                      child: Container(
+                        width: 80, height: 80,
+                        decoration: BoxDecoration(color: Colors.orange.shade400, borderRadius: BorderRadius.circular(20)),
+                        child: Center(child: FittedBox(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white)))),
+                      ),
+                    ),
+                    childWhenDragging: _draggedLetterId == letter.id ? const SizedBox(width: 80, height: 80) : null,
+                    child: Container(
+                      width: 80, height: 80,
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade400,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))],
+                      ),
+                      child: Center(child: FittedBox(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white)))),
+                    ),
+                  );
+                }).toList(),
               ),
-              childWhenDragging: _draggedLetterId == letter.id ? const SizedBox(width: 80, height: 80) : null, // شيل الشكل خالص وهو بيتسحب
-              child: Container(
-                width: 80, height: 80,
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade400,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))],
-                ),
-                child: Center(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white))),
-              ),
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: 80),
-      ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -4202,14 +4254,14 @@ class _LetterShadowGameState extends ConsumerState<LetterShadowGame> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const StarBurst(stars: 3),
-          Row(mainAxisSize: MainAxisSize.min, children: List.generate(3, (_) => const Icon(Icons.star, size: 80, color: Colors.amber))),
-          const SizedBox(height: 32),
+          Row(mainAxisSize: MainAxisSize.min, children: List.generate(3, (_) => const Icon(Icons.star, size: 60, color: Colors.amber))),
+          const SizedBox(height: 24),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton.filled(iconSize: 64, onPressed: () { setState(() => _isLoading = true); _initGame(); }, icon: const Icon(Icons.replay)),
-              const SizedBox(width: 32),
-              IconButton.filled(iconSize: 64, onPressed: () => context.go('/letters'), icon: const Icon(Icons.check)),
+              IconButton.filled(iconSize: 50, onPressed: () { setState(() => _isLoading = true); _initGame(); }, icon: const Icon(Icons.replay)),
+              const SizedBox(width: 24),
+              IconButton.filled(iconSize: 50, onPressed: () => context.go('/letters'), icon: const Icon(Icons.check)),
             ],
           ),
         ],
@@ -4225,10 +4277,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../data/models/profession_item.dart';
 import '../../../providers/audio_providers.dart';
-import '../../../providers/progress_providers.dart';
 import '../../../core/widgets/kids_background.dart';
-import '../../../core/animations/floating.dart';
-import '../../../core/animations/star_burst.dart';
 
 class ProfessionsChoiceGame extends ConsumerStatefulWidget {
   const ProfessionsChoiceGame({super.key});
@@ -4242,198 +4291,128 @@ class _ProfessionsChoiceGameState extends ConsumerState<ProfessionsChoiceGame> {
     ProfessionItem(id: 'doctor', name: 'طَبِيب', emoji: '👨‍⚕️', toolId: 'stethoscope'),
     ProfessionItem(id: 'teacher', name: 'مُعَلِّم', emoji: '👨‍🏫', toolId: 'book'),
     ProfessionItem(id: 'chef', name: 'طَبَّاخ', emoji: '👨‍🍳', toolId: 'pan'),
-    ProfessionItem(id: 'pilot', name: 'طَيَّار', emoji: '👨‍✈️', toolId: 'plane'),
-    ProfessionItem(id: 'farmer', name: 'فَلَّاح', emoji: '👨‍🌾', toolId: 'tractor'),
-    ProfessionItem(id: 'firefighter', name: 'رَجُل إِطْفَاء', emoji: '👨‍🚒', toolId: 'firetruck'),
-    ProfessionItem(id: 'police', name: 'شُرْطِي', emoji: '👮', toolId: 'badge'),
-    ProfessionItem(id: 'engineer', name: 'مُهَنْدِس', emoji: '👷', toolId: 'helmet'),
-    ProfessionItem(id: 'artist', name: 'رَسَّام', emoji: '👨‍🎨', toolId: 'palette'),
-    ProfessionItem(id: 'scientist', name: 'عَالِم', emoji: '👨‍🔬', toolId: 'microscope'),
-    ProfessionItem(id: 'baker', name: 'خَبَّاز', emoji: '🥖', toolId: 'bread'),
   ];
-
   static const Map<String, ToolItem> allTools = {
-    'saw': ToolItem(id: 'saw', name: 'مِنْشَار', emoji: '🪚'),
+    'saw': ToolItem(id: 'saw', name: 'مِنْشَار', emoji: '🪚'), 
     'stethoscope': ToolItem(id: 'stethoscope', name: 'سَمَّاعَة', emoji: '🩺'),
-    'book': ToolItem(id: 'book', name: 'كِتَاب', emoji: '📚'),
+    'book': ToolItem(id: 'book', name: 'كِتَاب', emoji: '📚'), 
     'pan': ToolItem(id: 'pan', name: 'مِقْلَاة', emoji: '🍳'),
-    'plane': ToolItem(id: 'plane', name: 'طَائِرَة', emoji: '✈️'),
-    'tractor': ToolItem(id: 'tractor', name: 'جَرَّارَة', emoji: '🚜'),
-    'firetruck': ToolItem(id: 'firetruck', name: 'عَرَبَة إِطْفَاء', emoji: '🚒'),
-    'badge': ToolItem(id: 'badge', name: 'شَارَة', emoji: '🛡️'),
-    'helmet': ToolItem(id: 'helmet', name: 'خُوذَة', emoji: '⛑️'),
-    'palette': ToolItem(id: 'palette', name: 'لَوْحَة أَلْوَان', emoji: '🎨'),
-    'microscope': ToolItem(id: 'microscope', name: 'مِجْهَر', emoji: '🔬'),
-    'bread': ToolItem(id: 'bread', name: 'خُبْز', emoji: '🥖'),
   };
-
-  int _currentIndex = 0;
-  List<String> _options = [];
-  String? _wrongId;
-  String? _okId;
-  bool _isFinished = false;
-  int _wrongAttempts = 0;
+  
+  int _currentIndex = 0; 
+  List<String> _options = []; 
+  String? _okId; 
   bool _locked = false;
 
   @override
-  void initState() {
-    super.initState();
-    _initRound();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(audioServiceProvider).playVoice('instructions/professions');
-    });
-  }
-
+  void initState() { super.initState(); _initRound(); }
+  
   void _initRound() {
-    final profession = professions[_currentIndex];
-    ref.read(audioServiceProvider).playVoice('professions/q_${profession.id}', force: true);
-    final otherTools = allTools.keys.where((k) => k != profession.toolId).toList()..shuffle();
-    setState(() {
-      _options = [profession.toolId, ...otherTools.take(2)]..shuffle();
-      _okId = null;
-      _wrongId = null;
-      _locked = false;
-    });
+    if (!mounted) return;
+    final prof = professions[_currentIndex];
+    ref.read(audioServiceProvider).playVoice('professions/q_${prof.id}');
+    final others = allTools.keys.where((k) => k != prof.toolId).toList()..shuffle();
+    setState(() { _options = [prof.toolId, ...others.take(2)]..shuffle(); _okId = null; _locked = false; });
   }
-
-  void _onTapTool(String toolId) async {
+  
+  void _onTap(String toolId) async {
     if (_locked) return;
-    final profession = professions[_currentIndex];
-    if (toolId == profession.toolId) {
+    if (toolId == professions[_currentIndex].toolId) {
       setState(() { _okId = toolId; _locked = true; });
       ref.read(audioServiceProvider).playSequence(['instructions/right', 'tools/$toolId']);
-      await Future.delayed(const Duration(milliseconds: 1000));
-      if (_currentIndex < professions.length - 1) {
-        setState(() { _currentIndex++; });
-        _initRound();
-      } else {
-        setState(() => _isFinished = true);
-        ref.read(progressRepositoryProvider).recordResult(
-          activityId: 'professions_choice_game',
-          contentId: 'professions',
-          kind: 'profession',
-          attempts: professions.length + _wrongAttempts,
-          correct: professions.length,
-          stars: _wrongAttempts == 0 ? 3 : (_wrongAttempts <= 3 ? 2 : 1),
-        );
-      }
+      await Future.delayed(const Duration(milliseconds: 1500));
+      if (!mounted) return;
+      if (_currentIndex < professions.length - 1) { setState(() => _currentIndex++); _initRound(); }
+      else { setState(() => _locked = false); context.go('/professions'); }
     } else {
-      setState(() { _wrongId = toolId; _wrongAttempts++; });
-      await Future.delayed(const Duration(milliseconds: 500));
-      if (mounted) setState(() => _wrongId = null);
+      ref.read(audioServiceProvider).playVoice('instructions/try_again');
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('حاول مرة أخرى!'), duration: Duration(milliseconds: 500)));
     }
   }
 
   @override
-  void dispose() {
-    ref.read(audioServiceProvider).stop();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final profession = professions[_currentIndex];
+    final prof = professions[_currentIndex];
     return Scaffold(
       body: KidsBackground(
-        child: Column(
-          children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(iconSize: 36, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
-              title: Text('اختيار الأداة (${_currentIndex + 1}/${professions.length})', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-              centerTitle: true,
-            ),
-            Expanded(
-              child: _isFinished ? _buildResult() : _buildGameBoard(profession),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGameBoard(ProfessionItem profession) {
-    return Column(
-      children: [
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-          child: const Text('مَا هِيَ الأَدَاة الَّتِي يَسْتَخْدِمُهَا؟', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
-        ),
-        const SizedBox(height: 24),
-        Floating(
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30), boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 15, offset: Offset(0, 8))]),
-            child: Column(
-              children: [
-                Text(profession.emoji, style: const TextStyle(fontSize: 120)),
-                const SizedBox(height: 8),
-                Text(profession.name, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
-              ],
-            ),
-          ),
-        ),
-        const Spacer(),
-        Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          alignment: WrapAlignment.center,
-          children: _options.map((toolId) {
-            final tool = allTools[toolId]!;
-            final isOk = toolId == _okId;
-            final isWrong = toolId == _wrongId;
-            return GestureDetector(
-              onTap: () => _onTapTool(toolId),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: 110, height: 130,
-                decoration: BoxDecoration(
-                  color: isOk ? Colors.green.shade100 : (isWrong ? Colors.orange.shade100 : Colors.white),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: isOk ? Colors.green : (isWrong ? Colors.orange : Colors.grey.shade300), width: 4),
-                  boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/professions')), title: const Text('اختيار الأداة', style: TextStyle(color: Colors.white))),
+              Expanded(
+                child: Row(
                   children: [
-                    Text(tool.emoji, style: const TextStyle(fontSize: 60)),
-                    const SizedBox(height: 8),
-                    Text(tool.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isOk ? Colors.green : (isWrong ? Colors.orange : Colors.black87))),
+                    // القسم الأول (الخيارات)
+                    Expanded(
+                      child: Center(
+                        child: Wrap(
+                          spacing: 16, runSpacing: 16, alignment: WrapAlignment.center,
+                          children: _options.map((toolId) {
+                            final tool = allTools[toolId]!;
+                            return GestureDetector(
+                              onTap: () => _onTap(toolId),
+                              child: Container(
+                                width: 100, height: 100,
+                                decoration: BoxDecoration(
+                                  color: _okId == toolId ? Colors.green.shade100 : Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: _okId == toolId ? Colors.green : Colors.orange, width: 3),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Expanded(child: FittedBox(fit: BoxFit.contain, child: Text(tool.emoji, style: const TextStyle(fontSize: 50)))),
+                                    FittedBox(fit: BoxFit.contain, child: Text(tool.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold))),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                    // القسم الثاني (السؤال)
+                    Expanded(
+                      child: Center(
+                        child: FittedBox(
+                          fit: BoxFit.contain,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                            child: const Text('ما الأداة التي يستخدمها؟', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // القسم الثالث (الصورة بدون إطار + السماعة)
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Expanded(flex: 3, child: FittedBox(fit: BoxFit.contain, child: Text(prof.emoji, style: const TextStyle(fontSize: 100)))),
+                          Expanded(flex: 1, child: FittedBox(
+                            fit: BoxFit.contain,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(icon: const Icon(Icons.volume_up, color: Colors.blue), onPressed: () => ref.read(audioServiceProvider).playVoice('professions/q_${prof.id}')),
+                                  Text(prof.name, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                                ],
+                              ),
+                            ),
+                          )),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
-            );
-          }).toList(),
-        ),
-        const Spacer(),
-      ],
-    );
-  }
-
-  Widget _buildResult() {
-    final stars = _wrongAttempts == 0 ? 3 : (_wrongAttempts <= 3 ? 2 : 1);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          StarBurst(stars: stars),
-          Row(mainAxisSize: MainAxisSize.min, children: List.generate(stars, (_) => const Icon(Icons.star, size: 80, color: Colors.amber))),
-          const SizedBox(height: 32),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton.filled(iconSize: 64, onPressed: () {
-                setState(() { _currentIndex = 0; _isFinished = false; _wrongAttempts = 0; });
-                _initRound();
-              }, icon: const Icon(Icons.replay)),
-              const SizedBox(width: 32),
-              IconButton.filled(iconSize: 64, onPressed: () => context.go('/'), icon: const Icon(Icons.check)),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -4446,9 +4425,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../data/models/profession_item.dart';
 import '../../../providers/audio_providers.dart';
-import '../../../providers/progress_providers.dart';
 import '../../../core/widgets/kids_background.dart';
-import '../../../core/animations/star_burst.dart';
 
 class ProfessionsDragGame extends ConsumerStatefulWidget {
   const ProfessionsDragGame({super.key});
@@ -4462,221 +4439,122 @@ class _ProfessionsDragGameState extends ConsumerState<ProfessionsDragGame> {
     ProfessionItem(id: 'doctor', name: 'طَبِيب', emoji: '👨‍⚕️', toolId: 'stethoscope'),
     ProfessionItem(id: 'teacher', name: 'مُعَلِّم', emoji: '👨‍🏫', toolId: 'book'),
     ProfessionItem(id: 'chef', name: 'طَبَّاخ', emoji: '👨‍🍳', toolId: 'pan'),
-    ProfessionItem(id: 'pilot', name: 'طَيَّار', emoji: '👨‍✈️', toolId: 'plane'),
-    ProfessionItem(id: 'farmer', name: 'فَلَّاح', emoji: '👨‍🌾', toolId: 'tractor'),
-    ProfessionItem(id: 'firefighter', name: 'رَجُل إِطْفَاء', emoji: '👨‍🚒', toolId: 'firetruck'),
-    ProfessionItem(id: 'police', name: 'شُرْطِي', emoji: '👮', toolId: 'badge'),
-    ProfessionItem(id: 'engineer', name: 'مُهَنْدِس', emoji: '👷', toolId: 'helmet'),
-    ProfessionItem(id: 'artist', name: 'رَسَّام', emoji: '👨‍🎨', toolId: 'palette'),
-    ProfessionItem(id: 'scientist', name: 'عَالِم', emoji: '👨‍🔬', toolId: 'microscope'),
-    ProfessionItem(id: 'baker', name: 'خَبَّاز', emoji: '🥖', toolId: 'bread'),
   ];
-
   static const Map<String, ToolItem> allTools = {
-    'saw': ToolItem(id: 'saw', name: 'مِنْشَار', emoji: '🪚'),
+    'saw': ToolItem(id: 'saw', name: 'مِنْشَار', emoji: '🪚'), 
     'stethoscope': ToolItem(id: 'stethoscope', name: 'سَمَّاعَة', emoji: '🩺'),
-    'book': ToolItem(id: 'book', name: 'كِتَاب', emoji: '📚'),
+    'book': ToolItem(id: 'book', name: 'كِتَاب', emoji: '📚'), 
     'pan': ToolItem(id: 'pan', name: 'مِقْلَاة', emoji: '🍳'),
-    'plane': ToolItem(id: 'plane', name: 'طَائِرَة', emoji: '✈️'),
-    'tractor': ToolItem(id: 'tractor', name: 'جَرَّارَة', emoji: '🚜'),
-    'firetruck': ToolItem(id: 'firetruck', name: 'عَرَبَة إِطْفَاء', emoji: '🚒'),
-    'badge': ToolItem(id: 'badge', name: 'شَارَة', emoji: '🛡️'),
-    'helmet': ToolItem(id: 'helmet', name: 'خُوذَة', emoji: '⛑️'),
-    'palette': ToolItem(id: 'palette', name: 'لَوْحَة أَلْوَان', emoji: '🎨'),
-    'microscope': ToolItem(id: 'microscope', name: 'مِجْهَر', emoji: '🔬'),
-    'bread': ToolItem(id: 'bread', name: 'خُبْز', emoji: '🥖'),
   };
-
-  int _currentIndex = 0;
-  List<String> _options = [];
-  bool _isFinished = false;
+  
+  int _currentIndex = 0; 
+  List<String> _options = []; 
   bool _locked = false;
 
   @override
-  void initState() {
-    super.initState();
-    _initRound();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(audioServiceProvider).playVoice('instructions/match');
-    });
-  }
-
+  void initState() { super.initState(); _initRound(); }
+  
   void _initRound() {
-    final profession = professions[_currentIndex];
-    ref.read(audioServiceProvider).playVoice('professions/q_${profession.id}', force: true);
-    final others = allTools.keys.where((k) => k != profession.toolId).toList()..shuffle();
-    setState(() {
-      _options = [profession.toolId, ...others.take(2)]..shuffle();
-      _locked = false;
-    });
+    if (!mounted) return;
+    final prof = professions[_currentIndex];
+    ref.read(audioServiceProvider).playVoice('professions/q_${prof.id}');
+    final others = allTools.keys.where((k) => k != prof.toolId).toList()..shuffle();
+    setState(() { _options = [prof.toolId, ...others.take(2)]..shuffle(); _locked = false; });
   }
-
+  
   void _onDragAccepted(String toolId) async {
     if (_locked) return;
-    final profession = professions[_currentIndex];
-    if (toolId == profession.toolId) {
+    if (toolId == professions[_currentIndex].toolId) {
       setState(() => _locked = true);
       ref.read(audioServiceProvider).playSequence(['instructions/right', 'tools/$toolId']);
-      await Future.delayed(const Duration(milliseconds: 1000));
-      
-      if (_currentIndex < professions.length - 1) {
-        setState(() { _currentIndex++; });
-        _initRound();
-      } else {
-        setState(() => _isFinished = true);
-        ref.read(progressRepositoryProvider).recordResult(
-          activityId: 'professions_drag_game',
-          contentId: 'professions',
-          kind: 'profession',
-          attempts: professions.length,
-          correct: professions.length,
-          stars: 3,
-        );
-      }
+      await Future.delayed(const Duration(milliseconds: 1500));
+      if (!mounted) return;
+      if (_currentIndex < professions.length - 1) { setState(() => _currentIndex++); _initRound(); }
+      else { context.go('/professions'); }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('حاول مرة أخرى!'), duration: Duration(milliseconds: 500)),
-      );
+      ref.read(audioServiceProvider).playVoice('instructions/try_again');
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('حاول مرة أخرى!'), duration: Duration(milliseconds: 500)));
     }
   }
 
   @override
-  void dispose() {
-    ref.read(audioServiceProvider).stop();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final p = professions[_currentIndex];
+    final prof = professions[_currentIndex];
     return Scaffold(
       body: KidsBackground(
-        child: Column(
-          children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(iconSize: 36, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
-              title: Text('توصيل المهن (${_currentIndex + 1}/${professions.length})', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-              centerTitle: true,
-            ),
-            Expanded(
-              child: _isFinished ? _buildResult() : _buildGameBoard(p),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGameBoard(ProfessionItem profession) {
-    return Column(
-      children: [
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-          child: const Text('اسْحَب الأَدَاة الصَّحِيحَة إِلَى المُهِمَّة', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
-        ),
-        const SizedBox(height: 24),
-        
-        DragTarget<String>(
-          onAcceptWithDetails: (details) => _onDragAccepted(details.data),
-          builder: (context, candidateData, rejectedData) {
-            return Container(
-              width: 180, height: 220, // الارتفاع ده مهم عشان نمنع الشريط الأصفر
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: Colors.orange, width: 5),
-                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 15, offset: Offset(0, 8))],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(profession.emoji, style: const TextStyle(fontSize: 90)),
-                  const SizedBox(height: 8),
-                  Text(profession.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
-                ],
-              ),
-            );
-          },
-        ),
-        const Spacer(),
-        
-        Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          alignment: WrapAlignment.center,
-          children: _options.map((toolId) {
-            final tool = allTools[toolId]!;
-            return Draggable<String>(
-              data: toolId,
-              feedback: Material(
-                color: Colors.transparent,
-                child: Container(
-                  width: 100, height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.orange, width: 4),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(tool.emoji, style: const TextStyle(fontSize: 50)),
-                      const SizedBox(height: 8),
-                      Text(tool.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
-              ),
-              childWhenDragging: const SizedBox(width: 100, height: 120),
-              child: Container(
-                width: 100, height: 120,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.orange, width: 4),
-                  boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/professions')), title: const Text('توصيل الأداة', style: TextStyle(color: Colors.white))),
+              Expanded(
+                child: Row(
                   children: [
-                    Text(tool.emoji, style: const TextStyle(fontSize: 50)),
-                    const SizedBox(height: 8),
-                    Text(tool.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                    // القسم الأول (الأدوات)
+                    Expanded(
+                      child: Center(
+                        child: Wrap(
+                          spacing: 16, runSpacing: 16, alignment: WrapAlignment.center,
+                          children: _options.map((toolId) {
+                            final tool = allTools[toolId]!;
+                            return Draggable<String>(
+                              data: toolId,
+                              feedback: Material(color: Colors.transparent, child: FittedBox(fit: BoxFit.contain, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)), child: Text(tool.emoji, style: const TextStyle(fontSize: 60))))),
+                              childWhenDragging: const SizedBox(width: 100, height: 100),
+                              child: Container(
+                                width: 100, height: 100,
+                                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.orange, width: 3)),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Expanded(child: FittedBox(fit: BoxFit.contain, child: Text(tool.emoji, style: const TextStyle(fontSize: 50)))),
+                                    FittedBox(fit: BoxFit.contain, child: Text(tool.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold))),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                    // القسم الثاني (منطقة السحب)
+                    Expanded(
+                      child: Center(
+                        child: DragTarget<String>(
+                          onAcceptWithDetails: (details) => _onDragAccepted(details.data),
+                          builder: (context, candidateData, rejectedData) {
+                            return Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Expanded(flex: 3, child: FittedBox(fit: BoxFit.contain, child: Text(prof.emoji, style: const TextStyle(fontSize: 100)))),
+                                Expanded(flex: 1, child: FittedBox(
+                                  fit: BoxFit.contain,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.orange, width: 3)),
+                                    child: Text(prof.name, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                                  ),
+                                )),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    // القسم الثالث (السهم)
+                    const Expanded(
+                      child: Center(
+                        child: FittedBox(
+                          fit: BoxFit.contain,
+                          child: Icon(Icons.arrow_back, size: 100, color: Colors.white),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-            );
-          }).toList(),
-        ),
-        const Spacer(),
-      ],
-    );
-  }
-
-  Widget _buildResult() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const StarBurst(stars: 3),
-          Row(mainAxisSize: MainAxisSize.min, children: List.generate(3, (_) => const Icon(Icons.star, size: 80, color: Colors.amber))),
-          const SizedBox(height: 32),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton.filled(iconSize: 64, onPressed: () {
-                setState(() { _currentIndex = 0; _isFinished = false; });
-                _initRound();
-              }, icon: const Icon(Icons.replay)),
-              const SizedBox(width: 32),
-              IconButton.filled(iconSize: 64, onPressed: () => context.go('/'), icon: const Icon(Icons.check)),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -4689,12 +4567,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../providers/audio_providers.dart';
 import '../../../core/widgets/kids_background.dart';
-import '../../../core/animations/bounce_in.dart';
-import '../../../core/animations/floating.dart';
 
 class ProfessionsLearn extends ConsumerStatefulWidget {
   const ProfessionsLearn({super.key});
-
   @override
   ConsumerState<ProfessionsLearn> createState() => _ProfessionsLearnState();
 }
@@ -4716,100 +4591,83 @@ class _ProfessionsLearnState extends ConsumerState<ProfessionsLearn> {
   ];
 
   int _currentIndex = 0;
-
   void _speak() {
-    final p = professions[_currentIndex];
-    ref.read(audioServiceProvider).playVoice(p['audio']!, force: true);
+    if (!mounted) return;
+    ref.read(audioServiceProvider).playVoice(professions[_currentIndex]['audio']!, force: true);
   }
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _speak());
-  }
-
+  void initState() { super.initState(); WidgetsBinding.instance.addPostFrameCallback((_) => _speak()); }
   @override
-  void dispose() {
-    ref.read(audioServiceProvider).stop();
-    super.dispose();
-  }
+  void dispose() { ref.read(audioServiceProvider).stop(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
     final p = professions[_currentIndex];
     return Scaffold(
       body: KidsBackground(
-        child: Column(
-          children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(iconSize: 36, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
-              title: const Text('تعلّم المهن', style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
-              centerTitle: true,
-            ),
-            Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: BounceIn(
-                    key: ValueKey(_currentIndex),
-                    child: Container(
-                      width: 350,
-                      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(40),
-                        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, 10))],
-                      ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/professions')), title: const Text('تعلّم المهن', style: TextStyle(color: Colors.white))),
+              Expanded(
+                child: Row(
+                  children: [
+                    IconButton(iconSize: 30, icon: const Icon(Icons.arrow_back_ios, color: Colors.white), onPressed: () { setState(() => _currentIndex = (_currentIndex - 1 + professions.length) % professions.length); _speak(); }),
+                    
+                    // القسم الأول (المهنة) - بدون إطار
+                    Expanded(
                       child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Floating(child: Text(p['emoji']!, style: const TextStyle(fontSize: 100))),
-                          const SizedBox(height: 8),
-                          Text(p['name']!, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
-                          const SizedBox(height: 16),
-                          const Text('يَسْتَخْدِمُ:', style: TextStyle(fontSize: 20, color: Colors.grey)),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(p['toolEmoji']!, style: const TextStyle(fontSize: 60)),
-                              const SizedBox(width: 16),
-                              Text(p['tool']!, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.orange)),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-                          IconButton.filled(iconSize: 40, onPressed: _speak, icon: const Icon(Icons.volume_up)),
+                          Expanded(flex: 3, child: FittedBox(fit: BoxFit.contain, child: Text(p['emoji']!, style: const TextStyle(fontSize: 100)))),
+                          Expanded(flex: 1, child: FittedBox(
+                            fit: BoxFit.contain,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                              child: Text(p['name']!, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                            ),
+                          )),
                         ],
                       ),
                     ),
-                  ),
+                    
+                    // القسم الثاني (يستخدم)
+                    const Expanded(
+                      child: Center(child: FittedBox(fit: BoxFit.contain, child: Text('يستخدم', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)))),
+                    ),
+                    
+                    // القسم الثالث (الأداة) - بدون إطار + السماعة
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Expanded(flex: 3, child: FittedBox(fit: BoxFit.contain, child: Text(p['toolEmoji']!, style: const TextStyle(fontSize: 100)))),
+                          Expanded(flex: 1, child: FittedBox(
+                            fit: BoxFit.contain,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(icon: const Icon(Icons.volume_up, color: Colors.orange), onPressed: _speak),
+                                  Text(p['tool']!, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.orange)),
+                                ],
+                              ),
+                            ),
+                          )),
+                        ],
+                      ),
+                    ),
+                    
+                    IconButton(iconSize: 30, icon: const Icon(Icons.arrow_forward_ios, color: Colors.white), onPressed: () { setState(() => _currentIndex = (_currentIndex + 1) % professions.length); _speak(); }),
+                  ],
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton.filled(
-                    style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.teal),
-                    iconSize: 48,
-                    onPressed: () { setState(() { _currentIndex = (_currentIndex - 1 + professions.length) % professions.length; }); _speak(); },
-                    icon: const Icon(Icons.arrow_back),
-                  ),
-                  Text('${_currentIndex + 1} / ${professions.length}', style: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
-                  IconButton.filled(
-                    style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.teal),
-                    iconSize: 48,
-                    onPressed: () { setState(() { _currentIndex = (_currentIndex + 1) % professions.length; }); _speak(); },
-                    icon: const Icon(Icons.arrow_forward),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -4822,7 +4680,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/widgets/kids_background.dart';
 import '../../../core/widgets/kids_button.dart';
-import '../../../core/animations/bounce_in.dart';
 
 class ProfessionsMenu extends StatelessWidget {
   const ProfessionsMenu({super.key});
@@ -4831,70 +4688,76 @@ class ProfessionsMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: KidsBackground(
-        child: Column(
-          children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
-              title: const Text('المهن', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
-              centerTitle: true,
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    BounceIn(
-                      child: KidsButton(
-                        color: Colors.green.shade400,
-                        onTap: () => context.push('/professions/learn'),
-                        child: const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.school, size: 60, color: Colors.white),
-                            SizedBox(height: 8),
-                            Text('تعلّم المهن', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-                          ],
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppBar(
+                backgroundColor: Colors.transparent, elevation: 0, 
+                leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/')), 
+                title: const Text('المهن', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+                centerTitle: true,
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: KidsButton(
+                          color: Colors.green.shade400,
+                          onTap: () => context.push('/professions/learn'),
+                          child: const FittedBox(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.school, size: 60, color: Colors.white),
+                                SizedBox(height: 8),
+                                Text('تعلّم المهن', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 24),
-                    BounceIn(
-                      child: KidsButton(
-                        color: Colors.blue.shade400,
-                        onTap: () => context.push('/professions/choice'),
-                        child: const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.touch_app, size: 60, color: Colors.white),
-                            SizedBox(height: 8),
-                            Text('اختيار الأداة', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-                          ],
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: KidsButton(
+                          color: Colors.blue.shade400,
+                          onTap: () => context.push('/professions/choice'),
+                          child: const FittedBox(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.touch_app, size: 60, color: Colors.white),
+                                SizedBox(height: 8),
+                                Text('اختيار الأداة', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 24),
-                    BounceIn(
-                      child: KidsButton(
-                        color: Colors.orange.shade400,
-                        onTap: () => context.push('/professions/drag'),
-                        child: const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.drag_indicator, size: 60, color: Colors.white),
-                            SizedBox(height: 8),
-                            Text('توصيل الأداة', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-                          ],
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: KidsButton(
+                          color: Colors.orange.shade400,
+                          onTap: () => context.push('/professions/drag'),
+                          child: const FittedBox(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.drag_indicator, size: 60, color: Colors.white),
+                                SizedBox(height: 8),
+                                Text('توصيل الأداة', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -4934,7 +4797,6 @@ class _ShapeShadowGameState extends ConsumerState<ShapeShadowGame> {
   }
 
   void _initGame() {
-    // نختار 3 أشكال عشوائية
     final allShapes = ShapesScreen.shapes.toList()..shuffle();
     final selected = allShapes.take(3).toList();
 
@@ -4943,6 +4805,7 @@ class _ShapeShadowGameState extends ConsumerState<ShapeShadowGame> {
       _options = selected.toList()..shuffle();
       _matched = {for (var s in selected) s.id: false};
       _isFinished = false;
+      _draggedShapeId = null;
     });
   }
 
@@ -4953,7 +4816,6 @@ class _ShapeShadowGameState extends ConsumerState<ShapeShadowGame> {
       });
       ref.read(audioServiceProvider).playVoice('shapes/${draggedShape.id}', force: true);
 
-      // التحقق من الفوز
       if (_matched.values.every((v) => v == true)) {
         setState(() => _isFinished = true);
         ref.read(progressRepositoryProvider).recordResult(
@@ -4976,92 +4838,106 @@ class _ShapeShadowGameState extends ConsumerState<ShapeShadowGame> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: KidsBackground(
-        child: Column(
-          children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(iconSize: 36, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go('/shapes')),
-              title: const Text('طابق الأشكال', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
-              centerTitle: true,
-            ),
-            Expanded(
-              child: _isFinished ? _buildResult() : _buildGameBoard(),
-            ),
-          ],
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(iconSize: 36, icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/shapes')),
+                title: const Text('طابق الأشكال', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                centerTitle: true,
+              ),
+              Expanded(
+                child: _isFinished ? _buildResult() : _buildGameBoard(),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildGameBoard() {
-    return Column(
-      children: [
-        const SizedBox(height: 20),
-        const Text('اسحب الشكل الملون وضعه على ظله', style: TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 20),
-        
-        // الأشكال المفرغة (الأهداف)
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: _targetShapes.map((shape) {
-            final isMatched = _matched[shape.id] ?? false;
-            return DragTarget<ShapeItem>(
-              onAcceptWithDetails: (details) => _onDragAccepted(shape.id, details.data),
-              builder: (context, candidateData, rejectedData) {
-                return Container(
-                  width: 100, height: 100,
-                  decoration: BoxDecoration(
-                    color: isMatched ? Colors.green.shade100 : Colors.white24,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: isMatched ? Colors.green : Colors.white, width: 3),
-                  ),
-                  child: Center(
-                    child: isMatched 
-                      ? const Icon(Icons.check_circle, color: Colors.green, size: 60)
-                      : SizedBox(
-                          width: 70, height: 70,
-                          child: CustomPaint(painter: ShapePainter(shape.type, Colors.grey.shade400)), // ظل رمادي
-                        ),
-                  ),
-                );
-              },
-            );
-          }).toList(),
-        ),
-        const Spacer(),
-        
-        // الأشكال الملونة (اللي بتتسحب)
-        Wrap(
-          spacing: 20,
-          runSpacing: 20,
-          alignment: WrapAlignment.center,
-          children: _options.map((shape) {
-            final isUsed = _matched[shape.id] == true;
-            if (isUsed) return const SizedBox(width: 80, height: 80);
-
-            return Draggable<ShapeItem>(
-              data: shape,
-              onDragStarted: () => setState(() => _draggedShapeId = shape.id),
-              onDragEnd: (_) => setState(() => _draggedShapeId = null),
-              onDraggableCanceled: (_, __) => setState(() => _draggedShapeId = null),
-              feedback: Material(
-                color: Colors.transparent,
-                child: SizedBox(
-                  width: 80, height: 80,
-                  child: CustomPaint(painter: ShapePainter(shape.type, Colors.blue.shade400)),
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        children: [
+          // النص الشمال: الأشكال المفرغة (الهدف)
+          Expanded(
+            flex: 1,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('اسحب الشكل إلى ظله', style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: _targetShapes.map((shape) {
+                    final isMatched = _matched[shape.id] ?? false;
+                    return DragTarget<ShapeItem>(
+                      onAcceptWithDetails: (details) => _onDragAccepted(shape.id, details.data),
+                      builder: (context, candidateData, rejectedData) {
+                        return Container(
+                          width: 80, height: 80,
+                          decoration: BoxDecoration(
+                            color: isMatched ? Colors.green.shade100 : Colors.white24,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: isMatched ? Colors.green : Colors.white, width: 3),
+                          ),
+                          child: Center(
+                            child: isMatched 
+                              ? const Icon(Icons.check_circle, color: Colors.green, size: 50)
+                              : SizedBox(
+                                  width: 50, height: 50,
+                                  child: CustomPaint(painter: ShapePainter(shape.type, Colors.grey.shade400)),
+                                ),
+                          ),
+                        );
+                      },
+                    );
+                  }).toList(),
                 ),
+              ],
+            ),
+          ),
+          
+          // النص اليمين: الأشكال الملونة (اللي بتتسحب)
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                alignment: WrapAlignment.center,
+                children: _options.map((shape) {
+                  final isUsed = _matched[shape.id] == true;
+                  if (isUsed) return const SizedBox(width: 80, height: 80);
+
+                  return Draggable<ShapeItem>(
+                    data: shape,
+                    onDragStarted: () => setState(() => _draggedShapeId = shape.id),
+                    onDragEnd: (_) => setState(() => _draggedShapeId = null),
+                    onDraggableCanceled: (_, __) => setState(() => _draggedShapeId = null),
+                    feedback: Material(
+                      color: Colors.transparent,
+                      child: SizedBox(
+                        width: 80, height: 80,
+                        child: CustomPaint(painter: ShapePainter(shape.type, Colors.blue.shade400)),
+                      ),
+                    ),
+                    childWhenDragging: _draggedShapeId == shape.id ? const SizedBox(width: 80, height: 80) : null,
+                    child: SizedBox(
+                      width: 80, height: 80,
+                      child: CustomPaint(painter: ShapePainter(shape.type, Colors.blue.shade400)),
+                    ),
+                  );
+                }).toList(),
               ),
-              childWhenDragging: _draggedShapeId == shape.id ? const SizedBox(width: 80, height: 80) : null,
-              child: SizedBox(
-                width: 80, height: 80,
-                child: CustomPaint(painter: ShapePainter(shape.type, Colors.blue.shade400)),
-              ),
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: 80),
-      ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -5071,17 +4947,14 @@ class _ShapeShadowGameState extends ConsumerState<ShapeShadowGame> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const StarBurst(stars: 3),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: List.generate(3, (_) => const Icon(Icons.star, size: 80, color: Colors.amber)),
-          ),
-          const SizedBox(height: 32),
+          Row(mainAxisSize: MainAxisSize.min, children: List.generate(3, (_) => const Icon(Icons.star, size: 60, color: Colors.amber))),
+          const SizedBox(height: 24),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton.filled(iconSize: 64, onPressed: _initGame, icon: const Icon(Icons.replay)),
-              const SizedBox(width: 32),
-              IconButton.filled(iconSize: 64, onPressed: () => context.go('/shapes'), icon: const Icon(Icons.check)),
+              IconButton.filled(iconSize: 50, onPressed: _initGame, icon: const Icon(Icons.replay)),
+              const SizedBox(width: 24),
+              IconButton.filled(iconSize: 50, onPressed: () => context.go('/shapes'), icon: const Icon(Icons.check)),
             ],
           ),
         ],
@@ -5095,7 +4968,6 @@ class _ShapeShadowGameState extends ConsumerState<ShapeShadowGame> {
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/animations/bounce_in.dart';
-import '../../core/animations/floating.dart';
 import '../../core/widgets/kids_background.dart';
 import '../../core/widgets/kids_button.dart';
 import '../parent_zone/hold_to_open.dart';
@@ -5105,158 +4977,121 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // معرفة إذا كانت الشاشة عرضية أم طولية
-    final isLandscape = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
-
-    // تصميم الزر
-    Widget buildMenuButton(String title, String letter, String route, Color color) {
-      return Floating(
-        child: BounceIn(
-          child: KidsButton(
-            width: isLandscape ? 220 : 180,
-            height: isLandscape ? 160 : 160,
-            color: color,
-            onTap: () => context.go(route),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(letter, style: const TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Colors.white, height: 1.0)),
-                const SizedBox(height: 8),
-                Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
       body: KidsBackground(
-        child: Stack(
-          children: [
-            Center(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // صورة البومة
-                      Floating(
-                        child: BounceIn(
-                          child: Container(
-                            width: isLandscape ? 120 : 140,
-                            height: isLandscape ? 120 : 140,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 15, offset: Offset(0, 8))],
-                            ),
-                            child: ClipOval(
-                              child: Image.asset(
-                                'assets/images/ui/mascot.png',
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Icon(Icons.school, size: 80, color: Colors.blue),
-                              ),
-                            ),
+        child: SafeArea(
+          child: Stack(
+            children: [
+              // المحتوى الأساسي (العنوان والسكرول)
+              Column(
+                children: [
+                  // العنوان والصورة
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 60, height: 60,
+                          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                          child: ClipOval(
+                            child: Image.asset('assets/images/ui/mascot.png', fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.school, size: 40, color: Colors.blue)),
                           ),
                         ),
-                      ),
-                      SizedBox(height: isLandscape ? 16 : 24),
-                      // العنوان
-                      const Floating(
-                        child: BounceIn(
-                          child: Text(
-                            'أول خطوة',
-                            style: TextStyle(
-                              fontSize: 56,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              shadows: [Shadow(color: Color(0xFF00796B), offset: Offset(4, 4), blurRadius: 0)],
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: isLandscape ? 32 : 48),
-                      
-                      // الأزرار (عرضية أو طولية)
-                      if (isLandscape)
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 32,
-                          runSpacing: 24,
-                          children: [
-                            Floating(child: buildMenuButton('الحروف', 'أ', '/letters', const Color(0xFFFF7043))),
-                            Floating(child: buildMenuButton('الأرقام', '١', '/numbers', const Color(0xFF29B6F6))),
-                            Floating(child: buildMenuButton('الألوان', '🎨', '/colors', const Color(0xFF9C27B0))),
-                            Floating(child: buildMenuButton('الأشكال', '🔺', '/shapes', const Color(0xFF4CAF50))),
-                            Floating(child: buildMenuButton('التلوين', '🖍️', '/coloring', const Color(0xFFFF9800))),
-                            Floating(child: buildMenuButton('المهن', '👷', '/professions', const Color(0xFF607D8B))),
-                          ],
-                        )
-                      else
-                        Column(
-                          children: [
-                            Floating(child: buildMenuButton('الحروف', 'أ', '/letters', const Color(0xFFFF7043))),
-                            const SizedBox(height: 24),
-                            Floating(child: buildMenuButton('الأرقام', '١', '/numbers', const Color(0xFF29B6F6))),
-                            const SizedBox(height: 24),
-                            Floating(child: buildMenuButton('الألوان', '🎨', '/colors', const Color(0xFF9C27B0))),
-                            const SizedBox(height: 24),
-                            Floating(child: buildMenuButton('الأشكال', '🔺', '/shapes', const Color(0xFF4CAF50))),
-                            const SizedBox(height: 24),
-                            Floating(child: buildMenuButton('التلوين', '🖍️', '/coloring', const Color(0xFFFF9800))),
-                            Floating(child: buildMenuButton('المهن', '👷', '/professions', const Color(0xFF607D8B))),
-                          ],
-                        ),
-                    ],
+                        const SizedBox(width: 16),
+                        const Text('أول خطوة', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white)),
+                      ],
+                    ),
                   ),
-                ),
+                  
+                  // السكرول الأفقي للكروت
+                  Expanded(
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      children: [
+                        // استخدام أيقونات فلاتر بدل الحروف
+                        _buildCard(context, 'الحروف', Icons.sort_by_alpha, '/letters', const Color(0xFFFF7043)),
+                        _buildCard(context, 'الأرقام', Icons.numbers, '/numbers', const Color(0xFF29B6F6)),
+                        _buildCard(context, 'الألوان', Icons.palette, '/colors', const Color(0xFF9C27B0)),
+                        _buildCard(context, 'الأشكال', Icons.category, '/shapes', const Color(0xFF4CAF50)),
+                        _buildCard(context, 'التلوين', Icons.brush, '/coloring', const Color(0xFFFF9800)),
+                        _buildCard(context, 'المهن', Icons.engineering, '/professions', const Color(0xFF607D8B)),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ),
-            // الحقوق في الأسفل
-            Positioned(
-              bottom: 4,
-              left: 0,
-              right: 0,
-              child: const Center(
-                child: Text(
-                  'Powered by Safyeldin Abdo © Ghinax',
-                  style: TextStyle(fontSize: 11, color: Colors.white70),
-                ),
+              
+              // زر القفل (يمين)
+              PositionedDirectional(
+                top: 8, end: 8,
+                child: HoldToOpen(onOpen: () => context.push('/parent-gate')),
               ),
-            ),
-            // زر القفل
-            PositionedDirectional(
-              top: 10,
-              end: 10,
-              child: SafeArea(
-                child: HoldToOpen(
-                  onOpen: () => context.push('/parent-gate'),
-                ),
-              ),
-            ),
-            PositionedDirectional(
-              top: 10,
-              start: 10,
-              child: SafeArea(
+              
+              // أزرار المكافآت و"حول" (شمال)
+              PositionedDirectional(
+                top: 8, start: 8,
                 child: Row(
                   children: [
                     IconButton(
-                      iconSize: 40,
-                      icon: const Icon(Icons.emoji_events, color: Colors.amber),
+                      iconSize: 32, 
+                      icon: const Icon(Icons.emoji_events, color: Colors.amber), 
                       onPressed: () => context.push('/rewards'),
                     ),
                     IconButton(
-                      iconSize: 40,
-                      icon: const Icon(Icons.info_outline, color: Colors.white),
+                      iconSize: 32, 
+                      icon: const Icon(Icons.info_outline, color: Colors.white), 
                       onPressed: () => context.push('/about'),
                     ),
                   ],
                 ),
               ),
+
+              // الحقوق في الأسفل (خافتة وشفافة)
+              const Positioned(
+                bottom: 8,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Text(
+                    'Powered by Safyeldin Abdo © Ghinax',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white70, // لون شفاف
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // تعديل الدالة عشان تستقبل IconData بدل String
+  Widget _buildCard(BuildContext context, String title, IconData icon, String route, Color color) {
+    return Container(
+      width: 260, // عرض الكارت
+      margin: const EdgeInsets.only(right: 16),
+      child: BounceIn(
+        child: KidsButton(
+          color: color,
+          onTap: () => context.go(route),
+          child: FittedBox( // عشان نمنع أي overflow
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 90, color: Colors.white), // استخدام Icon
+                const SizedBox(height: 16),
+                Text(title, style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold)),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -5272,10 +5107,7 @@ import '../../../data/content/content_repository.dart';
 import '../../../data/models/letter.dart';
 import '../../../providers/audio_providers.dart';
 import '../../../providers/content_providers.dart';
-import '../../../core/animations/bounce_in.dart';
 import '../../../core/widgets/kids_background.dart';
-import '../../../core/widgets/kids_button.dart';
-import '../../../core/widgets/animated_image.dart'; // 👈 الصورة المتحركة
 
 class LetterLessonScreen extends ConsumerStatefulWidget {
   const LetterLessonScreen({super.key, required this.letterId});
@@ -5297,10 +5129,7 @@ class _LetterLessonScreenState extends ConsumerState<LetterLessonScreen> {
     final letter = repo.letterById(widget.letterId);
     if (letter == null) return;
     final word = repo.wordById(letter.primaryWordId);
-    ref.read(audioServiceProvider).playSequence([
-      letter.nameAudio,
-      if (word != null) word.audio,
-    ]);
+    ref.read(audioServiceProvider).playSequence([letter.nameAudio, if (word != null) word.audio]);
   }
 
   @override
@@ -5314,25 +5143,16 @@ class _LetterLessonScreenState extends ConsumerState<LetterLessonScreen> {
     final repo = ref.watch(contentRepositoryProvider);
     return Scaffold(
       body: KidsBackground(
-        child: Column(
-          children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(iconSize: 40, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go('/letters')),
-            ),
-            Expanded(
-              child: repo.when(
-                loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
-                error: (e, _) => Center(child: Text('خطأ: $e', style: const TextStyle(color: Colors.white))),
-                data: (r) {
-                  final letter = r.letterById(widget.letterId);
-                  if (letter == null) return const Center(child: Text('الحرف غير موجود', style: TextStyle(color: Colors.white)));
-                  return _LessonBody(repo: r, letter: letter, onReplay: _speak);
-                },
-              ),
-            ),
-          ],
+        child: SafeArea(
+          child: repo.when(
+            loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
+            error: (e, _) => Center(child: Text('خطأ: $e', style: const TextStyle(color: Colors.white))),
+            data: (r) {
+              final letter = r.letterById(widget.letterId);
+              if (letter == null) return const Center(child: Text('الحرف غير موجود', style: TextStyle(color: Colors.white)));
+              return _LessonBody(repo: r, letter: letter, onReplay: _speak);
+            },
+          ),
         ),
       ),
     );
@@ -5351,141 +5171,95 @@ class _LessonBody extends StatelessWidget {
     final next = repo.nextOf(letter);
     final prev = repo.previousOf(letter);
 
-    // استخدام SingleChildScrollView عشان نمنع مشكلة الأصفر والأسود
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // بطاقة الحرف
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(40),
-                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 10))],
-              ),
-              child: Column(
-                children: [
-                  BounceIn(
-                    child: Text(letter.character, style: const TextStyle(fontSize: 120, fontWeight: FontWeight.bold, color: Color(0xFF00796B), height: 1.0)),
-                  ),
-                  Text(letter.name, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.orange)),
-                  const SizedBox(height: 8),
-                  Row(
+    return Column(
+      children: [
+        // شريط علوي بسيط
+        AppBar(
+          backgroundColor: Colors.transparent, elevation: 0,
+          leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/letters')),
+        ),
+        
+        // تقسيم الشاشة لعرض الحرف (شمال) والكلمة (يمين)
+        Expanded(
+          child: Row(
+            children: [
+              // النص الشمال: بطاقة الحرف
+              Expanded(
+                flex: 1,
+                child: Container(
+                  margin: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(40), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20)]),
+                  child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      for (final k in ['isolated', 'initial', 'medial', 'final'])
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Text(letter.forms[k] ?? '', style: const TextStyle(fontSize: 32, color: Colors.blueGrey, fontWeight: FontWeight.bold)),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            
-            // بطاقة الكلمة والصورة
-            if (word != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.orange.shade200, width: 2),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    AnimatedImage(
-                      imagePath: 'assets/images/${word.image}.png',
-                      emoji: word.emoji,
-                      onTap: onReplay,
-                    ),
-                    const SizedBox(width: 24),
-                    Column(
-                      children: [
-                        Text(word.textVowelled, style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.orange)),
-                        const SizedBox(height: 8),
-                        GestureDetector(
-                          onTap: onReplay,
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
-                            child: const Icon(Icons.volume_up, size: 30, color: Colors.white),
+                      // الحرف بحجم كبير ومتجاوب
+                      Expanded(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(letter.character, style: const TextStyle(fontSize: 150, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
                           ),
                         ),
+                      ),
+                      Text(letter.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.orange)),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                ),
+              ),
+              
+              // النص اليمين: الكلمة والألعاب
+              Expanded(
+                flex: 1,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    // بطاقة الكلمة
+                    if (word != null)
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.orange.shade200, width: 2)),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            FittedBox(child: Text(word.emoji, style: const TextStyle(fontSize: 60))),
+                            const SizedBox(width: 16),
+                            FittedBox(child: Text(word.textVowelled, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.orange))),
+                            const SizedBox(width: 8),
+                            IconButton.filled(iconSize: 30, onPressed: onReplay, icon: const Icon(Icons.volume_up)),
+                          ],
+                        ),
+                      ),
+                    
+                    // أزرار الأنشطة (التعرف، السحب، التتبع)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton.filledTonal(iconSize: 50, onPressed: () => context.push('/letters/${letter.id}/recognize'), icon: const Icon(Icons.touch_app)),
+                        const SizedBox(width: 16),
+                        IconButton.filledTonal(iconSize: 50, onPressed: () => context.push('/letters/${letter.id}/drag'), icon: const Icon(Icons.drag_indicator)),
+                        const SizedBox(width: 16),
+                        IconButton.filledTonal(iconSize: 50, onPressed: () => context.push('/letters/${letter.id}/trace'), icon: const Icon(Icons.draw)),
+                      ],
+                    ),
+                    
+                    // أزرار التنقل (السابق والتالي)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        IconButton.filled(iconSize: 40, onPressed: prev == null ? null : () => context.pushReplacement('/letters/${prev.id}'), icon: const Icon(Icons.arrow_back)),
+                        IconButton.filled(iconSize: 40, onPressed: next == null ? null : () => context.pushReplacement('/letters/${next.id}'), icon: const Icon(Icons.arrow_forward)),
                       ],
                     ),
                   ],
                 ),
               ),
-            const SizedBox(height: 32),
-            
-            // أزرار الأنشطة
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                KidsButton(
-                  width: 70,
-                  height: 70,
-                  color: Colors.purple.shade400,
-                  onTap: () => context.push('/letters/${letter.id}/recognize'),
-                  child: const Icon(Icons.touch_app, size: 32, color: Colors.white),
-                ),
-                const SizedBox(width: 12),
-                KidsButton(
-                  width: 70,
-                  height: 70,
-                  color: Colors.amber.shade600,
-                  onTap: () => context.push('/letters/${letter.id}/match'),
-                  child: const Icon(Icons.image, size: 32, color: Colors.white),
-                ),
-                const SizedBox(width: 12),
-                KidsButton(
-                  width: 70,
-                  height: 70,
-                  color: Colors.orange.shade600,
-                  onTap: () => context.push('/letters/${letter.id}/drag'),
-                  child: const Icon(Icons.drag_indicator, size: 32, color: Colors.white),
-                ),
-                const SizedBox(width: 12),
-                KidsButton(
-                  width: 70,
-                  height: 70,
-                  color: Colors.teal.shade400,
-                  onTap: () => context.push('/letters/${letter.id}/trace'),
-                  child: const Icon(Icons.draw, size: 32, color: Colors.white),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
-            
-            // أزرار التنقل
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton.filled(
-                  style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.teal),
-                  iconSize: 40,
-                  onPressed: prev == null ? null : () => context.pushReplacement('/letters/${prev.id}'),
-                  icon: const Icon(Icons.arrow_back),
-                ),
-                IconButton.filled(
-                  style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.teal),
-                  iconSize: 40,
-                  onPressed: next == null ? null : () => context.pushReplacement('/letters/${next.id}'),
-                  icon: const Icon(Icons.arrow_forward),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-          ],
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -5515,7 +5289,7 @@ class LettersScreen extends ConsumerWidget {
             AppBar(
               backgroundColor: Colors.transparent,
               elevation: 0,
-              leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
+              leading: IconButton(iconSize: 40, icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/')),
               title: const Text('الحروف', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
               centerTitle: true,
             ),
@@ -5619,7 +5393,6 @@ class CountingState {
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/animations/bounce_in.dart';
 import '../../../core/widgets/kids_background.dart';
 import '../../../core/widgets/kids_button.dart';
 import '../../../providers/audio_providers.dart';
@@ -5665,7 +5438,6 @@ class _NumberLessonScreenState extends ConsumerState<NumberLessonScreen> {
     if (spoken == 0) return;
     setState(() {});
     
-    // تشغيل صوت الرقم اللي اتعد
     final item = repo.numberByValue(spoken);
     if (item != null) ref.read(audioServiceProvider).playVoice(item.audio, force: true);
 
@@ -5695,108 +5467,121 @@ class _NumberLessonScreenState extends ConsumerState<NumberLessonScreen> {
 
     return Scaffold(
       body: KidsBackground(
-        child: Column(
-          children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(iconSize: 40, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go('/numbers')),
-              title: const Text('درس الرقم', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
-              centerTitle: true,
-            ),
-            Expanded(
-              child: repo.when(
-                loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
-                error: (e, _) => Center(child: Text('خطأ: $e', style: const TextStyle(color: Colors.white))),
-                data: (r) {
-                  final n = r.numberById(widget.numberId);
-                  final c = _counting;
-                  if (n == null || c == null) return const Center(child: CircularProgressIndicator(color: Colors.white));
-                  
-                  return Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
+        child: SafeArea(
+          child: repo.when(
+            loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
+            error: (e, _) => Center(child: Text('خطأ: $e', style: const TextStyle(color: Colors.white))),
+            data: (r) {
+              final n = r.numberById(widget.numberId);
+              final c = _counting;
+              if (n == null || c == null) return const Center(child: CircularProgressIndicator(color: Colors.white));
+              
+              return Column(
+                children: [
+                  AppBar(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    leading: IconButton(iconSize: 30, icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/numbers')),
+                    title: const Text('درس الرقم', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                    centerTitle: true,
+                  ),
+                  Expanded(
+                    child: Row(
                       children: [
-                        // بطاقة الرقم
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(40),
-                            boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 10))],
+                        // النص الشمال: بطاقة الرقم
+                        Expanded(
+                          flex: 1,
+                          child: Container(
+                            margin: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(40), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 10))]),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(formatNumber(n.value, style), style: const TextStyle(fontSize: 150, fontWeight: FontWeight.bold, color: Color(0xFF29B6F6))),
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 16.0),
+                                  child: FittedBox(child: Text(n.nameText, style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.orange))),
+                                ),
+                              ],
+                            ),
                           ),
+                        ),
+                        
+                        // النص اليمين: العد والأزرار
+                        Expanded(
+                          flex: 1,
                           child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              BounceIn(child: Text(formatNumber(n.value, style), style: const TextStyle(fontSize: 120, fontWeight: FontWeight.bold, color: Color(0xFF29B6F6), height: 1.0))),
-                              Text(n.nameText, style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.orange)),
+                              // منطقة العد
+                              Expanded(
+                                child: Center(
+                                  child: n.value > 0 && n.value <= 20 
+                                    ? Wrap(
+                                        alignment: WrapAlignment.center,
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: [
+                                          for (var i = 0; i < n.value; i++)
+                                            GestureDetector(
+                                              onTap: () => _onTapObject(i),
+                                              child: AnimatedOpacity(
+                                                duration: const Duration(milliseconds: 200),
+                                                opacity: c.counted.contains(i) ? 1.0 : 0.5,
+                                                child: Container(
+                                                  width: 60, height: 60,
+                                                  decoration: BoxDecoration(
+                                                    color: c.counted.contains(i) ? Colors.green.shade100 : Colors.white,
+                                                    shape: BoxShape.circle,
+                                                    border: Border.all(color: c.counted.contains(i) ? Colors.green : Colors.grey.shade400, width: 3),
+                                                  ),
+                                                  child: Center(
+                                                    child: FittedBox(
+                                                      child: Text(c.counted.contains(i) ? '✅' : '🍎', style: const TextStyle(fontSize: 30)),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      )
+                                    : const Text('', style: TextStyle(fontSize: 20)),
+                                ),
+                              ),
+                              
+                              // النجمة
+                              if (_done) const Icon(Icons.star, size: 50, color: Colors.amber),
+
+                              // أزرار التحكم
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 16.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    IconButton.filled(iconSize: 40, onPressed: _start, icon: const Icon(Icons.replay)),
+                                    const SizedBox(width: 16),
+                                    IconButton.filled(iconSize: 40, onPressed: () => context.push('/numbers/${n.id}/pick'), icon: const Icon(Icons.touch_app)),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                        const Spacer(),
-                        
-                        // منطقة العد (لو الرقم أكبر من 20 هنكتفي بالرسالة عشان الشاشة متضربش)
-                        if (n.value > 0 && n.value <= 20)
-                          Expanded(
-                            child: SingleChildScrollView(
-                              child: Wrap(
-                                alignment: WrapAlignment.center,
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  for (var i = 0; i < n.value; i++)
-                                    GestureDetector(
-                                      onTap: () => _onTapObject(i),
-                                      child: AnimatedOpacity(
-                                        duration: const Duration(milliseconds: 200),
-                                        opacity: c.counted.contains(i) ? 1.0 : 0.5,
-                                        child: Container(
-                                          width: 60,
-                                          height: 60,
-                                          decoration: BoxDecoration(
-                                            color: c.counted.contains(i) ? Colors.green.shade100 : Colors.white,
-                                            shape: BoxShape.circle,
-                                            border: Border.all(color: c.counted.contains(i) ? Colors.green : Colors.grey.shade400, width: 3),
-                                          ),
-                                          child: Center(
-                                            child: c.counted.contains(i) 
-                                              ? const Icon(Icons.check, color: Colors.green, size: 30)
-                                              : const Icon(Icons.apple, color: Colors.redAccent, size: 30),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          )
-                        else if (n.value > 20)
-                          const Text('رَقَم كَبِير!', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white))
-                        else 
-                          const Text('صِفْر (لَا شَيْء)', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white)),
-                        
-                        const Spacer(),
-                        if (_done) const Icon(Icons.star, size: 80, color: Colors.amber),
-                        const Spacer(),
-                        // أزرار التحكم
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            KidsButton(width: 80, height: 80, color: Colors.blue.shade400, onTap: _start, child: const Icon(Icons.replay, size: 40, color: Colors.white)),
-                            const SizedBox(width: 16),
-                            KidsButton(width: 80, height: 80, color: Colors.purple.shade400, onTap: () => context.push('/numbers/${n.id}/pick'), child: const Icon(Icons.touch_app, size: 40, color: Colors.white)),
-                            const SizedBox(width: 16),
-                            KidsButton(width: 80, height: 80, color: Colors.orange.shade400, onTap: () => context.push('/numbers/${n.id}/count_game'), child: const Icon(Icons.filter_9_plus, size: 40, color: Colors.white)),
-                          ],
-                        ),
-                        const SizedBox(height: 32),
                       ],
                     ),
-                  );
-                },
-              ),
-            ),
-          ],
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -5835,7 +5620,7 @@ class NumbersScreen extends ConsumerWidget {
             AppBar(
               backgroundColor: Colors.transparent,
               elevation: 0,
-              leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
+              leading: IconButton(iconSize: 40, icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/')),
               title: const Text('الأرقام', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
               centerTitle: true,
             ),
@@ -6016,7 +5801,9 @@ class _ParentGateScreenState extends ConsumerState<ParentGateScreen> {
 
     return Scaffold(
       body: KidsBackground(
-        child: Center(
+        child: Stack(
+          children: [
+            Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -6060,6 +5847,18 @@ class _ParentGateScreenState extends ConsumerState<ParentGateScreen> {
               ],
             ),
           ),
+            ),
+            PositionedDirectional(
+              top: 10, start: 10,
+              child: SafeArea(
+                child: IconButton(
+                  iconSize: 30,
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => context.go('/'),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -6190,7 +5989,7 @@ class RewardsScreen extends ConsumerWidget {
             AppBar(
               backgroundColor: Colors.transparent,
               elevation: 0,
-              leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
+              leading: IconButton(iconSize: 40, icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/')),
               title: const Text('المكافآت', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
               centerTitle: true,
             ),
@@ -6231,7 +6030,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/widgets/kids_background.dart';
-import '../../../core/animations/bounce_in.dart';
 import '../../../data/models/shape_item.dart';
 import '../../../providers/audio_providers.dart';
 
@@ -6254,88 +6052,97 @@ class ShapesScreen extends ConsumerWidget {
 
     return Scaffold(
       body: KidsBackground(
-        child: Column(
-          children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
-              title: const Text('الأشكال', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
-              centerTitle: true,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 60,
-                      child: FilledButton.icon(
-                        style: FilledButton.styleFrom(backgroundColor: Colors.blue.shade400),
-                        onPressed: () => context.push('/shapes/game'),
-                        icon: const Icon(Icons.videogame_asset, color: Colors.white),
-                        label: const Text('لعبة الأشكال', style: TextStyle(fontSize: 18, color: Colors.white)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: SizedBox(
-                      height: 60,
-                      child: FilledButton.icon(
-                        style: FilledButton.styleFrom(backgroundColor: Colors.purple.shade400),
-                        onPressed: () => context.push('/shapes/shadow_game'),
-                        icon: const Icon(Icons.extension, color: Colors.white),
-                        label: const Text('طابق الظل', style: TextStyle(fontSize: 18, color: Colors.white)),
-                      ),
-                    ),
-                  ),
-                ],
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(iconSize: 30, icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/')),
+                title: const Text('الأشكال', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+                centerTitle: true,
               ),
-            ),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  int crossAxisCount = constraints.maxWidth > 600 ? 4 : 2;
-                  return GridView.builder(
-                    padding: const EdgeInsets.all(16),
-                    scrollDirection: Axis.horizontal,
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 1.0,
-                    ),
-                    itemCount: shapes.length,
-                    itemBuilder: (context, i) {
-                      final s = shapes[i];
-                      return BounceIn(
-                        child: GestureDetector(
-                          onTap: () => ref.read(audioServiceProvider).playVoice('shapes/${s.id}', force: true),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(30),
-                              boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 15, offset: Offset(0, 8))],
-                              border: Border.all(color: Colors.blue.shade200, width: 4),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SizedBox(width: 80, height: 80, child: CustomPaint(painter: ShapePainter(s.type, Colors.blue.shade400))),
-                                const SizedBox(height: 8),
-                                Text(s.name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
-                              ],
-                            ),
-                          ),
+              
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 50,
+                        child: FilledButton.icon(
+                          style: FilledButton.styleFrom(backgroundColor: Colors.blue.shade400),
+                          onPressed: () => context.push('/shapes/game'),
+                          icon: const Icon(Icons.videogame_asset, color: Colors.white, size: 20),
+                          label: const Text('لعبة الأشكال', style: TextStyle(fontSize: 16, color: Colors.white)),
                         ),
-                      );
-                    },
-                  );
-                },
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: SizedBox(
+                        height: 50,
+                        child: FilledButton.icon(
+                          style: FilledButton.styleFrom(backgroundColor: Colors.purple.shade400),
+                          onPressed: () => context.push('/shapes/shadow_game'),
+                          icon: const Icon(Icons.extension, color: Colors.white, size: 20),
+                          label: const Text('طابق الظل', style: TextStyle(fontSize: 16, color: Colors.white)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              
+              Expanded(
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: shapes.length,
+                  itemBuilder: (context, i) {
+                    final s = shapes[i];
+                    return GestureDetector(
+                      onTap: () {
+                        ref.read(audioServiceProvider).playVoice('shapes/${s.id}', force: true);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('هَذَا هُوَ الشَّكْل ${s.name}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            backgroundColor: Colors.blue.shade700,
+                            duration: const Duration(milliseconds: 1500),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        width: 160,
+                        margin: const EdgeInsets.only(left: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 8))],
+                          border: Border.all(color: Colors.blue.shade200, width: 4),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // الرسمة هنا
+                            SizedBox(
+                              width: 80, height: 80,
+                              child: CustomPaint(
+                                size: const Size(80, 80), // إجبار الرسمة على حجم معين
+                                painter: ShapePainter(s.type, Colors.blue.shade400),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(s.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -6349,6 +6156,7 @@ class ShapePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (size.width == 0 || size.height == 0) return; // حماية للرسمة
     final paint = Paint()..color = color..style = PaintingStyle.fill;
     final w = size.width;
     final h = size.height;
@@ -6696,16 +6504,23 @@ import 'core/settings/app_settings.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // 1. تفعيل الصوت على الكمبيوتر (لينكس)
+
+  // 2. فرض الوضع العرضي
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
+
+  // 3. إعدادات الصوت
   try {
     final session = await AudioSession.instance;
     await session.configure(const AudioSessionConfiguration.speech());
   } catch (e) {
     debugPrint('AudioSession init failed: $e');
   }
+  
   final prefs = await SharedPreferences.getInstance();
   runApp(ProviderScope(
     overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],

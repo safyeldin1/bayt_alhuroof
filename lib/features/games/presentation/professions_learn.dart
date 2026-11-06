@@ -3,12 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../providers/audio_providers.dart';
 import '../../../core/widgets/kids_background.dart';
-import '../../../core/animations/bounce_in.dart';
-import '../../../core/animations/floating.dart';
 
 class ProfessionsLearn extends ConsumerStatefulWidget {
   const ProfessionsLearn({super.key});
-
   @override
   ConsumerState<ProfessionsLearn> createState() => _ProfessionsLearnState();
 }
@@ -30,100 +27,83 @@ class _ProfessionsLearnState extends ConsumerState<ProfessionsLearn> {
   ];
 
   int _currentIndex = 0;
-
   void _speak() {
-    final p = professions[_currentIndex];
-    ref.read(audioServiceProvider).playVoice(p['audio']!, force: true);
+    if (!mounted) return;
+    ref.read(audioServiceProvider).playVoice(professions[_currentIndex]['audio']!, force: true);
   }
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _speak());
-  }
-
+  void initState() { super.initState(); WidgetsBinding.instance.addPostFrameCallback((_) => _speak()); }
   @override
-  void dispose() {
-    ref.read(audioServiceProvider).stop();
-    super.dispose();
-  }
+  void dispose() { ref.read(audioServiceProvider).stop(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
     final p = professions[_currentIndex];
     return Scaffold(
       body: KidsBackground(
-        child: Column(
-          children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(iconSize: 36, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
-              title: const Text('تعلّم المهن', style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
-              centerTitle: true,
-            ),
-            Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: BounceIn(
-                    key: ValueKey(_currentIndex),
-                    child: Container(
-                      width: 350,
-                      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(40),
-                        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, 10))],
-                      ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/professions')), title: const Text('تعلّم المهن', style: TextStyle(color: Colors.white))),
+              Expanded(
+                child: Row(
+                  children: [
+                    IconButton(iconSize: 30, icon: const Icon(Icons.arrow_back_ios, color: Colors.white), onPressed: () { setState(() => _currentIndex = (_currentIndex - 1 + professions.length) % professions.length); _speak(); }),
+                    
+                    // القسم الأول (المهنة) - بدون إطار
+                    Expanded(
                       child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Floating(child: Text(p['emoji']!, style: const TextStyle(fontSize: 100))),
-                          const SizedBox(height: 8),
-                          Text(p['name']!, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
-                          const SizedBox(height: 16),
-                          const Text('يَسْتَخْدِمُ:', style: TextStyle(fontSize: 20, color: Colors.grey)),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(p['toolEmoji']!, style: const TextStyle(fontSize: 60)),
-                              const SizedBox(width: 16),
-                              Text(p['tool']!, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.orange)),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-                          IconButton.filled(iconSize: 40, onPressed: _speak, icon: const Icon(Icons.volume_up)),
+                          Expanded(flex: 3, child: FittedBox(fit: BoxFit.contain, child: Text(p['emoji']!, style: const TextStyle(fontSize: 100)))),
+                          Expanded(flex: 1, child: FittedBox(
+                            fit: BoxFit.contain,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                              child: Text(p['name']!, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF00796B))),
+                            ),
+                          )),
                         ],
                       ),
                     ),
-                  ),
+                    
+                    // القسم الثاني (يستخدم)
+                    const Expanded(
+                      child: Center(child: FittedBox(fit: BoxFit.contain, child: Text('يستخدم', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)))),
+                    ),
+                    
+                    // القسم الثالث (الأداة) - بدون إطار + السماعة
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Expanded(flex: 3, child: FittedBox(fit: BoxFit.contain, child: Text(p['toolEmoji']!, style: const TextStyle(fontSize: 100)))),
+                          Expanded(flex: 1, child: FittedBox(
+                            fit: BoxFit.contain,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(icon: const Icon(Icons.volume_up, color: Colors.orange), onPressed: _speak),
+                                  Text(p['tool']!, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.orange)),
+                                ],
+                              ),
+                            ),
+                          )),
+                        ],
+                      ),
+                    ),
+                    
+                    IconButton(iconSize: 30, icon: const Icon(Icons.arrow_forward_ios, color: Colors.white), onPressed: () { setState(() => _currentIndex = (_currentIndex + 1) % professions.length); _speak(); }),
+                  ],
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton.filled(
-                    style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.teal),
-                    iconSize: 48,
-                    onPressed: () { setState(() { _currentIndex = (_currentIndex - 1 + professions.length) % professions.length; }); _speak(); },
-                    icon: const Icon(Icons.arrow_back),
-                  ),
-                  Text('${_currentIndex + 1} / ${professions.length}', style: const TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
-                  IconButton.filled(
-                    style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.teal),
-                    iconSize: 48,
-                    onPressed: () { setState(() { _currentIndex = (_currentIndex + 1) % professions.length; }); _speak(); },
-                    icon: const Icon(Icons.arrow_forward),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

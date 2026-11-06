@@ -21,7 +21,7 @@ class LettersScreen extends ConsumerWidget {
             AppBar(
               backgroundColor: Colors.transparent,
               elevation: 0,
-              leading: IconButton(iconSize: 40, icon: const Icon(Icons.home, color: Colors.white), onPressed: () => context.go('/')),
+              leading: IconButton(iconSize: 40, icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/')),
               title: const Text('الحروف', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
               centerTitle: true,
             ),

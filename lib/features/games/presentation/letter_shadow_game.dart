@@ -70,95 +70,113 @@ class _LetterShadowGameState extends ConsumerState<LetterShadowGame> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: KidsBackground(
-        child: Column(
-          children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(iconSize: 36, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go('/letters')),
-              title: const Text('طابق الحروف', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
-              centerTitle: true,
-            ),
-            Expanded(
-              child: _isLoading 
-                ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                : _isFinished 
-                  ? _buildResult() 
-                  : _buildGameBoard(),
-            ),
-          ],
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: IconButton(iconSize: 36, icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/letters')),
+                title: const Text('طابق الحروف', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                centerTitle: true,
+              ),
+              Expanded(
+                child: _isLoading 
+                  ? const Center(child: CircularProgressIndicator(color: Colors.white))
+                  : _isFinished 
+                    ? _buildResult() 
+                    : _buildGameBoard(),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildGameBoard() {
-    return Column(
-      children: [
-        const SizedBox(height: 20),
-        const Text('اسحب الحرف وضعه على ظله', style: TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: _targetLetters.map((letter) {
-            final isMatched = _matched[letter.id] ?? false;
-            return DragTarget<Letter>(
-              onAcceptWithDetails: (details) => _onDragAccepted(letter.id, details.data),
-              builder: (context, candidateData, rejectedData) {
-                return Container(
-                  width: 100, height: 100,
-                  decoration: BoxDecoration(
-                    color: isMatched ? Colors.green.shade100 : Colors.white24,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: isMatched ? Colors.green : Colors.white, width: 3),
-                  ),
-                  child: Center(
-                    child: isMatched 
-                      ? const Icon(Icons.check_circle, color: Colors.green, size: 60)
-                      : Text(letter.character, style: TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Colors.grey.shade400)),
-                  ),
-                );
-              },
-            );
-          }).toList(),
-        ),
-        const Spacer(),
-        Wrap(
-          spacing: 20,
-          runSpacing: 20,
-          alignment: WrapAlignment.center,
-          children: _options.map((letter) {
-            final isUsed = _matched[letter.id] == true;
-            if (isUsed) return const SizedBox(width: 80, height: 80);
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        children: [
+          // النص الشمال: الأشكال المفرغة (الهدف)
+          Expanded(
+            flex: 1,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('اسحب الحرف إلى ظله', style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: _targetLetters.map((letter) {
+                    final isMatched = _matched[letter.id] ?? false;
+                    return DragTarget<Letter>(
+                      onAcceptWithDetails: (details) => _onDragAccepted(letter.id, details.data),
+                      builder: (context, candidateData, rejectedData) {
+                        return Container(
+                          width: 80, height: 80,
+                          decoration: BoxDecoration(
+                            color: isMatched ? Colors.green.shade100 : Colors.white24,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: isMatched ? Colors.green : Colors.white, width: 3),
+                          ),
+                          child: Center(
+                            child: isMatched 
+                              ? const Icon(Icons.check_circle, color: Colors.green, size: 50)
+                              : FittedBox(child: Text(letter.character, style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.grey.shade400))),
+                          ),
+                        );
+                      },
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+          
+          // النص اليمين: الحروف الملونة (اللي بتتسحب)
+          Expanded(
+            flex: 1,
+            child: Center(
+              child: Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                alignment: WrapAlignment.center,
+                children: _options.map((letter) {
+                  final isUsed = _matched[letter.id] == true;
+                  if (isUsed) return const SizedBox(width: 80, height: 80);
 
-            return Draggable<Letter>(
-              data: letter,
-              onDragStarted: () => setState(() => _draggedLetterId = letter.id),
-              onDragEnd: (_) => setState(() => _draggedLetterId = null),
-              onDraggableCanceled: (_, __) => setState(() => _draggedLetterId = null),
-              feedback: Material(
-                color: Colors.transparent,
-                child: Container(
-                  width: 80, height: 80,
-                  decoration: BoxDecoration(color: Colors.orange.shade400, borderRadius: BorderRadius.circular(20)),
-                  child: Center(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white))),
-                ),
+                  return Draggable<Letter>(
+                    data: letter,
+                    onDragStarted: () => setState(() => _draggedLetterId = letter.id),
+                    onDragEnd: (_) => setState(() => _draggedLetterId = null),
+                    onDraggableCanceled: (_, __) => setState(() => _draggedLetterId = null),
+                    feedback: Material(
+                      color: Colors.transparent,
+                      child: Container(
+                        width: 80, height: 80,
+                        decoration: BoxDecoration(color: Colors.orange.shade400, borderRadius: BorderRadius.circular(20)),
+                        child: Center(child: FittedBox(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white)))),
+                      ),
+                    ),
+                    childWhenDragging: _draggedLetterId == letter.id ? const SizedBox(width: 80, height: 80) : null,
+                    child: Container(
+                      width: 80, height: 80,
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade400,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))],
+                      ),
+                      child: Center(child: FittedBox(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white)))),
+                    ),
+                  );
+                }).toList(),
               ),
-              childWhenDragging: _draggedLetterId == letter.id ? const SizedBox(width: 80, height: 80) : null, // شيل الشكل خالص وهو بيتسحب
-              child: Container(
-                width: 80, height: 80,
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade400,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))],
-                ),
-                child: Center(child: Text(letter.character, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white))),
-              ),
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: 80),
-      ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -168,14 +186,14 @@ class _LetterShadowGameState extends ConsumerState<LetterShadowGame> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const StarBurst(stars: 3),
-          Row(mainAxisSize: MainAxisSize.min, children: List.generate(3, (_) => const Icon(Icons.star, size: 80, color: Colors.amber))),
-          const SizedBox(height: 32),
+          Row(mainAxisSize: MainAxisSize.min, children: List.generate(3, (_) => const Icon(Icons.star, size: 60, color: Colors.amber))),
+          const SizedBox(height: 24),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton.filled(iconSize: 64, onPressed: () { setState(() => _isLoading = true); _initGame(); }, icon: const Icon(Icons.replay)),
-              const SizedBox(width: 32),
-              IconButton.filled(iconSize: 64, onPressed: () => context.go('/letters'), icon: const Icon(Icons.check)),
+              IconButton.filled(iconSize: 50, onPressed: () { setState(() => _isLoading = true); _initGame(); }, icon: const Icon(Icons.replay)),
+              const SizedBox(width: 24),
+              IconButton.filled(iconSize: 50, onPressed: () => context.go('/letters'), icon: const Icon(Icons.check)),
             ],
           ),
         ],

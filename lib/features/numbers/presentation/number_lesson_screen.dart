@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/animations/bounce_in.dart';
 import '../../../core/widgets/kids_background.dart';
 import '../../../core/widgets/kids_button.dart';
 import '../../../providers/audio_providers.dart';
@@ -47,7 +46,6 @@ class _NumberLessonScreenState extends ConsumerState<NumberLessonScreen> {
     if (spoken == 0) return;
     setState(() {});
     
-    // تشغيل صوت الرقم اللي اتعد
     final item = repo.numberByValue(spoken);
     if (item != null) ref.read(audioServiceProvider).playVoice(item.audio, force: true);
 
@@ -77,108 +75,121 @@ class _NumberLessonScreenState extends ConsumerState<NumberLessonScreen> {
 
     return Scaffold(
       body: KidsBackground(
-        child: Column(
-          children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(iconSize: 40, icon: const Icon(Icons.apps, color: Colors.white), onPressed: () => context.go('/numbers')),
-              title: const Text('درس الرقم', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
-              centerTitle: true,
-            ),
-            Expanded(
-              child: repo.when(
-                loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
-                error: (e, _) => Center(child: Text('خطأ: $e', style: const TextStyle(color: Colors.white))),
-                data: (r) {
-                  final n = r.numberById(widget.numberId);
-                  final c = _counting;
-                  if (n == null || c == null) return const Center(child: CircularProgressIndicator(color: Colors.white));
-                  
-                  return Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
+        child: SafeArea(
+          child: repo.when(
+            loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
+            error: (e, _) => Center(child: Text('خطأ: $e', style: const TextStyle(color: Colors.white))),
+            data: (r) {
+              final n = r.numberById(widget.numberId);
+              final c = _counting;
+              if (n == null || c == null) return const Center(child: CircularProgressIndicator(color: Colors.white));
+              
+              return Column(
+                children: [
+                  AppBar(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    leading: IconButton(iconSize: 30, icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => context.go('/numbers')),
+                    title: const Text('درس الرقم', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                    centerTitle: true,
+                  ),
+                  Expanded(
+                    child: Row(
                       children: [
-                        // بطاقة الرقم
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(40),
-                            boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 10))],
+                        // النص الشمال: بطاقة الرقم
+                        Expanded(
+                          flex: 1,
+                          child: Container(
+                            margin: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(40), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 10))]),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(formatNumber(n.value, style), style: const TextStyle(fontSize: 150, fontWeight: FontWeight.bold, color: Color(0xFF29B6F6))),
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 16.0),
+                                  child: FittedBox(child: Text(n.nameText, style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.orange))),
+                                ),
+                              ],
+                            ),
                           ),
+                        ),
+                        
+                        // النص اليمين: العد والأزرار
+                        Expanded(
+                          flex: 1,
                           child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              BounceIn(child: Text(formatNumber(n.value, style), style: const TextStyle(fontSize: 120, fontWeight: FontWeight.bold, color: Color(0xFF29B6F6), height: 1.0))),
-                              Text(n.nameText, style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.orange)),
+                              // منطقة العد
+                              Expanded(
+                                child: Center(
+                                  child: n.value > 0 && n.value <= 20 
+                                    ? Wrap(
+                                        alignment: WrapAlignment.center,
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: [
+                                          for (var i = 0; i < n.value; i++)
+                                            GestureDetector(
+                                              onTap: () => _onTapObject(i),
+                                              child: AnimatedOpacity(
+                                                duration: const Duration(milliseconds: 200),
+                                                opacity: c.counted.contains(i) ? 1.0 : 0.5,
+                                                child: Container(
+                                                  width: 60, height: 60,
+                                                  decoration: BoxDecoration(
+                                                    color: c.counted.contains(i) ? Colors.green.shade100 : Colors.white,
+                                                    shape: BoxShape.circle,
+                                                    border: Border.all(color: c.counted.contains(i) ? Colors.green : Colors.grey.shade400, width: 3),
+                                                  ),
+                                                  child: Center(
+                                                    child: FittedBox(
+                                                      child: Text(c.counted.contains(i) ? '✅' : '🍎', style: const TextStyle(fontSize: 30)),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      )
+                                    : const Text('', style: TextStyle(fontSize: 20)),
+                                ),
+                              ),
+                              
+                              // النجمة
+                              if (_done) const Icon(Icons.star, size: 50, color: Colors.amber),
+
+                              // أزرار التحكم
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 16.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    IconButton.filled(iconSize: 40, onPressed: _start, icon: const Icon(Icons.replay)),
+                                    const SizedBox(width: 16),
+                                    IconButton.filled(iconSize: 40, onPressed: () => context.push('/numbers/${n.id}/pick'), icon: const Icon(Icons.touch_app)),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                        const Spacer(),
-                        
-                        // منطقة العد (لو الرقم أكبر من 20 هنكتفي بالرسالة عشان الشاشة متضربش)
-                        if (n.value > 0 && n.value <= 20)
-                          Expanded(
-                            child: SingleChildScrollView(
-                              child: Wrap(
-                                alignment: WrapAlignment.center,
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  for (var i = 0; i < n.value; i++)
-                                    GestureDetector(
-                                      onTap: () => _onTapObject(i),
-                                      child: AnimatedOpacity(
-                                        duration: const Duration(milliseconds: 200),
-                                        opacity: c.counted.contains(i) ? 1.0 : 0.5,
-                                        child: Container(
-                                          width: 60,
-                                          height: 60,
-                                          decoration: BoxDecoration(
-                                            color: c.counted.contains(i) ? Colors.green.shade100 : Colors.white,
-                                            shape: BoxShape.circle,
-                                            border: Border.all(color: c.counted.contains(i) ? Colors.green : Colors.grey.shade400, width: 3),
-                                          ),
-                                          child: Center(
-                                            child: c.counted.contains(i) 
-                                              ? const Icon(Icons.check, color: Colors.green, size: 30)
-                                              : const Icon(Icons.apple, color: Colors.redAccent, size: 30),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          )
-                        else if (n.value > 20)
-                          const Text('رَقَم كَبِير!', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white))
-                        else 
-                          const Text('صِفْر (لَا شَيْء)', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white)),
-                        
-                        const Spacer(),
-                        if (_done) const Icon(Icons.star, size: 80, color: Colors.amber),
-                        const Spacer(),
-                        // أزرار التحكم
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            KidsButton(width: 80, height: 80, color: Colors.blue.shade400, onTap: _start, child: const Icon(Icons.replay, size: 40, color: Colors.white)),
-                            const SizedBox(width: 16),
-                            KidsButton(width: 80, height: 80, color: Colors.purple.shade400, onTap: () => context.push('/numbers/${n.id}/pick'), child: const Icon(Icons.touch_app, size: 40, color: Colors.white)),
-                            const SizedBox(width: 16),
-                            KidsButton(width: 80, height: 80, color: Colors.orange.shade400, onTap: () => context.push('/numbers/${n.id}/count_game'), child: const Icon(Icons.filter_9_plus, size: 40, color: Colors.white)),
-                          ],
-                        ),
-                        const SizedBox(height: 32),
                       ],
                     ),
-                  );
-                },
-              ),
-            ),
-          ],
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );

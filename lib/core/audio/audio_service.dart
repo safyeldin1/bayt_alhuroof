@@ -1,59 +1,43 @@
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 
 class AudioService {
   final AudioPlayer _voice = AudioPlayer();
   double voiceVolume = 1.0;
-  DateTime _lastTap = DateTime.fromMillisecondsSinceEpoch(0);
-  int _token = 0;
-
-  static const _debounce = Duration(milliseconds: 250);
 
   Future<void> playVoice(String ref, {bool force = false}) async {
-    final now = DateTime.now();
-    if (!force && now.difference(_lastTap) < _debounce) return;
-    _lastTap = now;
-    final myToken = ++_token;
-    await _playOne(ref, myToken);
-  }
+    try {
+      final assetPath = 'assets/audio/$ref.m4a';
+      debugPrint('🔊 [محاولة تشغيل]: $assetPath');
+      
+      // لو إحنا على لينكس، بنتجاهل التشغيل الفعلي عشان التطبيق ميهنجش
+      if (Platform.isLinux) {
+        debugPrint('⚠️ [لينكس]: تم تجاهل التشغيل الفعلي (لتجنب التعليق)، الصوت سيعمل على الموبايل.');
+        return;
+      }
 
-  Future<void> playSequence(List<String> refs) async {
-    final myToken = ++_token;
-    for (final ref in refs) {
-      if (myToken != _token) return;
-      await _playOne(ref, myToken);
+      await _voice.stop();
+      await _voice.setAsset(assetPath);
+      await _voice.setVolume(voiceVolume);
+      _voice.play();
+    } catch (e) {
+      debugPrint('❌ خطأ في الصوت ($ref): $e');
     }
   }
 
-  Future<void> _playOne(String ref, int token) async {
-    try {
-      await _voice.stop();
-      if (token != _token) return;
-      await _voice.setAsset('assets/audio/$ref.m4a');
-      await _voice.setVolume(voiceVolume);
-      await _voice.play();
-    } on MissingPluginException {
-      debugPrint('⚠️ الصوت غير مدعوم على هذه المنصة (لينكس)، وسيعمل على أندرويد');
-    } catch (e) {
-      debugPrint('audio error ($ref): $e');
+  Future<void> playSequence(List<String> refs) async {
+    for (final ref in refs) {
+      await playVoice(ref, force: true);
+      await Future.delayed(const Duration(milliseconds: 800));
     }
   }
 
   Future<void> stop() async {
-    _token++;
-    try {
-      await _voice.stop();
-    } on MissingPluginException {
-      // تجاهل على لينكس
-    } catch (e) {
-      debugPrint('audio stop error: $e');
-    }
+    try { await _voice.stop(); } catch (_) {}
   }
 
   Future<void> dispose() async {
-    try {
-      await _voice.dispose();
-    } catch (_) {}
+    try { await _voice.dispose(); } catch (_) {}
   }
 }
