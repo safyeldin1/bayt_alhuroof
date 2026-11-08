@@ -51,6 +51,8 @@ class HomeScreen extends StatelessWidget {
                         _buildCard(context, 'الأشكال', Icons.category, '/shapes', const Color(0xFF4CAF50)),
                         _buildCard(context, 'التلوين', Icons.brush, '/coloring', const Color(0xFFFF9800)),
                         _buildCard(context, 'المهن', Icons.engineering, '/professions', const Color(0xFF607D8B)),
+                        _buildCard(context, 'لعبة البلالين', Icons.bubble_chart, '/balloon_game', const Color(0xFF00BCD4)),
+                        _buildCard(context, 'أركان الإسلام', Icons.mosque, '/pillars_learn', const Color(0xFF4CAF50)),
                       ],
                     ),
                   ),

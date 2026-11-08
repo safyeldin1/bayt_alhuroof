@@ -25,6 +25,10 @@ import '../../providers/parent_providers.dart';
 
 // === ملفات المهن ===
 import '../../features/games/presentation/professions_menu.dart';
+import '../../features/games/presentation/balloon_game_screen.dart';
+import '../../features/games/presentation/pillars_learn_screen.dart';
+import '../../features/games/presentation/pillar_details_screen.dart';
+import '../../features/games/presentation/pillars_game_screen.dart';
 import '../../features/games/presentation/professions_choice_game.dart';
 import '../../features/games/presentation/professions_drag_game.dart';
 import '../../features/games/presentation/professions_learn.dart';
@@ -62,6 +66,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/coloring', builder: (c, s) => const ColoringGallery()),
       
       // المهن (الـ 4 مسارات)
+      GoRoute(path: '/balloon_game', builder: (c, s) => const BalloonGameScreen()),
+      GoRoute(path: '/pillars_learn', builder: (c, s) => const PillarsLearnScreen()),
+      GoRoute(path: '/pillar_details/:id', builder: (c, s) => PillarDetailsScreen(pillarId: s.pathParameters['id']!)),
+      GoRoute(path: '/pillars_game', builder: (c, s) => const PillarsGameScreen()),
       GoRoute(path: '/professions', builder: (c, s) => const ProfessionsMenu()),
       GoRoute(path: '/professions/learn', builder: (c, s) => const ProfessionsLearn()),
       GoRoute(path: '/professions/choice', builder: (c, s) => const ProfessionsChoiceGame()),
